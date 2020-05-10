@@ -1,0 +1,20 @@
+{
+"answers/0/id": "1",
+"answers/0/label": "test",
+"answers/1/id": "2",
+"answers/1/label": "testt",
+"difficulty": "1",
+"options/0/props/hint_en": "Choose the more likely time.",
+"options/0/props/list/0/label_en": "six o'clock",
+"options/0/props/list/1/label_en": "three o'clock",
+"options/0/props/list/2/label_en": "02",
+"options/1/props/list/2/label_en": "12",
+"options/0/type": "ClockOptions",
+"options/1/props/hint_en": "Choose the more likely time.",
+"options/1/props/list/0/label_en": "six o'clock",
+"options/1/props/list/1/label_en": "three o'clock",
+"options/1/type": "ClockOptions",
+"questionId": "537fcb02-c596-4237-960d-7f38b520d426",
+"questionTemplate": "TemplatesWrapper",
+"question_en": "Nancy is driving home from work. What time is it?"
+}

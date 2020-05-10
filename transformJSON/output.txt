@@ -1,0 +1,52 @@
+{
+    "questionId": "537fcb02-c596-4237-960d-7f38b520d426",
+    "questionTemplate": "TemplatesWrapper",
+    "question": "Nancy is driving home from work. What time is it?",
+    "difficulty": "1",
+    "answers": [
+        {
+            "id": "1",
+            "label": "test"
+        },
+        {
+            "id": "2",
+            "label": "testt"
+        }
+    ],
+    "options": [
+        {
+            "type": "ClockOptions",
+            "props": {
+                "hint": "Choose the more likely time.",
+                "list": [
+                    {
+                        "label": "six o'clock"
+                    },
+                    {
+                        "label": "three o'clock"
+                    },
+                    {
+                        "label": "02"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "ClockOptions",
+            "props": {
+                "hint": "Choose the more likely time.",
+                "list": [
+                    {
+                        "label": "six o'clock"
+                    },
+                    {
+                        "label": "three o'clock"
+                    },
+                    {
+                        "label": "12"
+                    }
+                ]
+            }
+        }
+    ]
+}
