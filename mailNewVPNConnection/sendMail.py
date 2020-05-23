@@ -3,9 +3,9 @@ import smtplib
 import datetime
 
 
-smtp_user = "carplannerroot@gmail.com"
-smtp_pass = "samsungS3"
-recipients = "rizescueusebiu@gmail.com"
+smtp_user = "SENDER@gmail.com"
+smtp_pass = "PASSWORD"
+recipients = "RECEIVER@gmail.com"
 smtp_server = "smtp.gmail.com"
 
 try:
