@@ -1,3 +1,10 @@
+Script that is triggered when new client connects to OpenVPN.
+
+More info in my comment here:
+https://askubuntu.com/questions/28733/how-do-i-run-a-script-after-openvpn-has-connected-successfully/1225138#1225138
+
+For short:
+
 mkdir /mailOpenVPN
 
 chmod 777 /mailOpenVPN
@@ -15,6 +22,3 @@ script-security 2
 client-connect /etc/openvpn/up.sh
 
 service openvpn restart
-
-
-https://askubuntu.com/questions/28733/how-do-i-run-a-script-after-openvpn-has-connected-successfully/1225138#1225138
