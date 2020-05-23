@@ -6,6 +6,9 @@ import psutil
 import smtplib
 import datetime
 
+# Crontab:
+# 0 * * * * /usr/local/bin/sendMailUptime.py
+
 smtp_user = "SENDER@gmail.com"
 smtp_pass = "PASSWORD"
 recipients = "RECEIVER@gmail.com"
