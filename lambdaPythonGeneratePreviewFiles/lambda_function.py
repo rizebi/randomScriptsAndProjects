@@ -25,7 +25,7 @@ def lambda_handler(event, context):
     print("Copy file from source S3")
     if src_bucket != "":
       client = boto3.client('s3')
-      source_file = "/preview-function/" + src_path.split("/")[-1]
+      source_file = "/tmp/" + src_path.split("/")[-1]
       client.download_file(src_bucket, src_path, source_file)
     else:
       # If the src_bucket == 0 we will not copy from S3, and use local path.
@@ -76,7 +76,7 @@ def lambda_handler(event, context):
 
     ### Generate preview
     print("Generating preview")
-    manager = PreviewManager("/preview-function/cache", create_folder= True)
+    manager = PreviewManager("/tmp/cache", create_folder= True)
     preview_image = manager.get_jpeg_preview(source_file, width=wanted_width, height=wanted_height)
     print("Successfully generated preview")
 
@@ -96,7 +96,7 @@ def lambda_handler(event, context):
     # Resize the image
     ltrb_border=(int(delta_w/2), int(delta_h/2), int(delta_w-(delta_w/2)) + precision_pixel_w, int(delta_h-(delta_h/2)) + precision_pixel_h)
     img_with_border = ImageOps.expand(img, border=ltrb_border, fill='white')
-    output_file = "/preview-function/output_preview." + output_format
+    output_file = "/tmp/output_preview." + output_format
     img_with_border.save(output_file)
     print("Successfully resized and formatted")
 
