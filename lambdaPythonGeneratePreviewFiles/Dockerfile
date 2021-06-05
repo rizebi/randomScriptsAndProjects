@@ -13,8 +13,6 @@ RUN mkdir /tmp/libreoffice; cd libreoffice; wget https://download.documentfounda
 # Install pachage that actually does the previews
 RUN pip install preview-generator boto3 openpyxl
 
-RUN mkdir /preview-function
-
 # Copy lambda function code
 COPY lambda_function.py ./
 
