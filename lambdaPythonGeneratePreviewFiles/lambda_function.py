@@ -1,3 +1,5 @@
+import os
+import openpyxl # For Excel manipulation
 import boto3
 import traceback
 from shutil import copyfile
@@ -23,7 +25,7 @@ def lambda_handler(event, context):
     print("Copy file from source S3")
     if src_bucket != "":
       client = boto3.client('s3')
-      source_file = "/tmp/" + src_path.split("/")[-1]
+      source_file = "/preview-function/" + src_path.split("/")[-1]
       client.download_file(src_bucket, src_path, source_file)
     else:
       # If the src_bucket == 0 we will not copy from S3, and use local path.
@@ -31,9 +33,50 @@ def lambda_handler(event, context):
       source_file = src_path
     print("Successfully copied file from source S3")
 
+    ### If file is Excel and it is big, make it smaller.
+    if ".xls" in src_path and os.path.getsize(source_file) > 5000000: #5MB
+      print("It seems to be a big Excel file. Try to keep only first 100 lines and columns")
+      # opening the source excel file
+      wb1 = openpyxl.load_workbook(source_file)
+      ws1 = wb1.worksheets[0]
+
+      # opening the destination excel file
+      truncated_file = source_file + ".truncated." + source_file.split(".")[-1]
+
+      # Create new empty file
+      wb = openpyxl.Workbook()
+      ws =  wb.active
+      ws.title = "Changed Sheet"
+      wb.save(filename = truncated_file)
+
+      wb2 = openpyxl.load_workbook(truncated_file)
+      ws2 = wb2.active
+
+      # We will write only the first 100 lines and columns
+      mr = 100
+      mc = 100
+
+      # copying the cell values from source
+      # excel file to destination excel file
+      for i in range (1, mr + 1):
+          for j in range (1, mc + 1):
+              # reading cell value from source excel file
+              c = ws1.cell(row = i, column = j)
+
+              # writing the read value to destination excel file
+              ws2.cell(row = i, column = j).value = c.value
+
+      # saving the destination excel file
+      print("Saving truncated file to: " + truncated_file)
+      wb2.save(str(truncated_file))
+      print("Saved")
+      source_file = truncated_file
+      print("Successfuly truncated the big Excel file")
+
+
     ### Generate preview
     print("Generating preview")
-    manager = PreviewManager("/tmp/cache", create_folder= True)
+    manager = PreviewManager("/preview-function/cache", create_folder= True)
     preview_image = manager.get_jpeg_preview(source_file, width=wanted_width, height=wanted_height)
     print("Successfully generated preview")
 
@@ -53,7 +96,7 @@ def lambda_handler(event, context):
     # Resize the image
     ltrb_border=(int(delta_w/2), int(delta_h/2), int(delta_w-(delta_w/2)) + precision_pixel_w, int(delta_h-(delta_h/2)) + precision_pixel_h)
     img_with_border = ImageOps.expand(img, border=ltrb_border, fill='white')
-    output_file = "/tmp/output_preview." + output_format
+    output_file = "/preview-function/output_preview." + output_format
     img_with_border.save(output_file)
     print("Successfully resized and formatted")
 

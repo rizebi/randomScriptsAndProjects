@@ -6,7 +6,7 @@ docker build -t lambda-generate-preview-image .
 docker run -p 9000:8080 -v /Users/eusebiu.rizescu/Data/Git/randomScriptsAndProjects/lambdaPythonGeneratePreviewFiles:/mnt/data lambda-generate-preview-image
 
 ##### Invoke function
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"src_bucket": "", "src_path": "/mnt/data/pig.jpg", "dest_bucket": "", "dest_path": "/mnt/data/output.jpg", "width": "500", "height": "1000", "format": "png", "ok_sns": "arn::blabla", "error_sns": "arn::blabla"}'
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"src_bucket": "", "src_path": "/preview-function/big.xlsx", "dest_bucket": "", "dest_path": "/preview-function/output.jpg", "width": "500", "height": "1000", "format": "png", "ok_sns": "arn::blabla", "error_sns": "arn::blabla"}'
 
 ### How to create the Lambda Function
 1) Upload previously created image to ECR (container registry for AWS)
@@ -21,7 +21,7 @@ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d
 
 - Invoke function like this from command line:
 
-aws lambda invoke --region us-west-2 --function-name lambda-generate-preview-image --cli-binary-format raw-in-base64-out --payload '{"src_bucket": "lambda-generate-preview-image-source", "src_path": "source_folder/pig.jpg", "dest_bucket": "lambda-generate-preview-image-destination", "dest_path": "destination_folder/pig-preview.jpg", "width": "500", "height": "1000", "format": "jpg", "ok_sns": "arn:aws:sns:us-west-2:020275857710:lambda-generate-preview-image-ok-topic", "error_sns": "arn:aws:sns:us-west-2:020275857710:lambda-generate-preview-image-error-topic"}' invoke_function_response
+aws lambda invoke --region us-west-2 --function-name lambda-generate-preview-image --cli-binary-format raw-in-base64-out --payload '{"src_bucket": "lambda-generate-preview-image-source", "src_path": "source_folder/Equity Sharing Calculators.xlsm", "dest_bucket": "lambda-generate-preview-image-destination", "dest_path": "destination_folder/eusebiu_excel.jpg", "width": "500", "height": "1000", "format": "jpg", "ok_sns": "arn:aws:sns:us-west-2:020275857710:lambda-generate-preview-image-ok-topic", "error_sns": "arn:aws:sns:us-west-2:020275857710:lambda-generate-preview-image-error-topic"}' invoke_function_response
 
 - For test we can go to Lambda console, and launch an test event
 
