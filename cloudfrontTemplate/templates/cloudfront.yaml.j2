@@ -1,0 +1,142 @@
+Description: Starts and configures a new Cloudfront distribution
+
+Outputs:
+  S3BucketNamePrivateContent:
+    Description: S3BucketNamePrivateContent
+    Value: !Sub "${S3BucketNamePrivateContent}"
+  S3BucketNameImages:
+    Description: S3BucketNameImages
+    Value: !Sub "${S3BucketNameImages}"
+  CustomOriginName:
+    Description: CustomOriginName
+    Value: !Sub "${CustomOriginName}"
+  CloudfrontAlias:
+    Description: CloudfrontAlias
+    Value: !Sub "${CloudfrontAlias}"
+
+Parameters:
+  Env:
+    Description: The environment name. This must be unique between deployments
+    Type: String
+  S3BucketNamePrivateContent:
+    Description: S3 Bucket Name for Private Content
+    Type: String
+  S3BucketPathPrivateContent:
+    Description: Path that will be configured in Cloudfront for Private Content in order for it to know how to route
+    Type: String
+  S3BucketNameImages:
+    Description: S3BucketNameImages
+    Type: String
+  S3BucketPathImages:
+    Description: Path that will be configured in Cloudfront for Images in order for it to know how to route
+    Type: String
+  CustomOriginName:
+    Description: CustomOriginName
+    Type: String
+  CloudfrontAlias:
+    Description: The DNS Alias of Cloudfront distribution
+    Type: String
+  CFViewerCertificateARN:
+    Description: CFViewerCertificateARN
+    Type: String
+
+Resources:
+  S3BucketPrivateContent:
+    Properties:
+      BucketName: !Sub "${S3BucketNamePrivateContent}"
+    Type: "AWS::S3::Bucket"
+
+  S3BucketImages:
+    Properties:
+      BucketName: !Sub "${S3BucketNameImages}"
+    Type: "AWS::S3::Bucket"
+
+  CloudfrontDistribution:
+    DependsOn:
+      - S3BucketPrivateContent
+      - S3BucketImages
+    Properties:
+      DistributionConfig:
+        Enabled: 'true'
+        Aliases:
+          - !Sub "${CloudfrontAlias}"
+        ViewerCertificate:
+          AcmCertificateArn: !Sub "${CFViewerCertificateARN}"
+          MinimumProtocolVersion: TLSv1.1_2016
+          SslSupportMethod: sni-only
+        DefaultCacheBehavior:
+          TargetOriginId: CustomOrigin
+          ViewerProtocolPolicy: allow-all
+          ForwardedValues:
+            QueryString: 'true'
+        CacheBehaviors:
+          - PathPattern: !Sub "${S3BucketPathPrivateContent}"
+            TargetOriginId: S3BucketPrivateContentOrigin
+            ViewerProtocolPolicy: allow-all
+            ForwardedValues:
+              QueryString: 'true'
+          - PathPattern: !Sub "${S3BucketPathImages}"
+            TargetOriginId: S3BucketImagesOrigin
+            ViewerProtocolPolicy: allow-all
+            ForwardedValues:
+              QueryString: 'true'
+        Origins:
+          - DomainName: !Sub "${S3BucketNamePrivateContent}.s3.amazonaws.com"
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudfrontOriginAccessIdentityPrivate.Id}"
+            Id: S3BucketPrivateContentOrigin
+          - DomainName: !Sub "${S3BucketNameImages}.s3.amazonaws.com"
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudfrontOriginAccessIdentityImages.Id}"
+            Id: S3BucketImagesOrigin
+          - CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: match-viewer
+            DomainName: !Sub "${CustomOriginName}"
+            Id: CustomOrigin
+    Type: "AWS::CloudFront::Distribution"
+
+  CloudfrontOriginAccessIdentityPrivate:
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "CloudfrontOriginAccessIdentityPrivate"
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+
+  CloudfrontOriginAccessIdentityImages:
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "CloudfrontOriginAccessIdentityImages"
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+
+  S3BucketPrivateContentPolicy:
+    DependsOn:
+      - S3BucketPrivateContent
+      - CloudfrontOriginAccessIdentityPrivate
+    Properties:
+      Bucket: !Sub "${S3BucketNamePrivateContent}"
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${S3BucketNamePrivateContent}/*"
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudfrontOriginAccessIdentityPrivate.Id}"
+    Type: "AWS::S3::BucketPolicy"
+
+  S3BucketImagesPolicy:
+    DependsOn:
+      - S3BucketImages
+      - CloudfrontOriginAccessIdentityImages
+    Properties:
+      Bucket: !Sub "${S3BucketNameImages}"
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${S3BucketNameImages}/*"
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudfrontOriginAccessIdentityImages.Id}"
+    Type: "AWS::S3::BucketPolicy"
