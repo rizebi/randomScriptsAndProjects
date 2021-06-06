@@ -1,0 +1,13 @@
+template_path: s3.yaml.j2
+
+project_code: cloudfront
+
+region: us-west-2
+
+# To create new env, replace "devel" with new env name here and in cloudfront.yaml file
+
+stack_name: enaia-s3-devel
+
+parameters:
+  S3BucketNamePrivateContent     : "enaia-devel-s3-private-content"
+  S3BucketNameImages             : "enaia-devel-s3-images"

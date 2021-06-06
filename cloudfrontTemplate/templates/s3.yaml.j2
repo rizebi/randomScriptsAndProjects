@@ -1,0 +1,22 @@
+Description: Starts and configures a new Cloudfront distribution
+
+Outputs: {}
+
+Parameters:
+  S3BucketNamePrivateContent:
+    Description: S3 Bucket Name for Private Content
+    Type: String
+  S3BucketNameImages:
+    Description: S3BucketNameImages
+    Type: String
+
+Resources:
+  S3BucketPrivateContent:
+    Properties:
+      BucketName: !Sub "${S3BucketNamePrivateContent}"
+    Type: "AWS::S3::Bucket"
+
+  S3BucketImages:
+    Properties:
+      BucketName: !Sub "${S3BucketNameImages}"
+    Type: "AWS::S3::Bucket"

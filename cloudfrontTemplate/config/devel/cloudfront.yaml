@@ -2,14 +2,20 @@ template_path: cloudfront.yaml.j2
 
 project_code: cloudfront
 
-stack_name: enaia-cloudfront-dev
+region: us-east-1
+
+# To create new env, replace "devel" with new env name here and in s3.yaml file
+
+stack_name: enaia-cloudfront-devel
+
+dependencies:
+  - devel/s3.yaml
 
 parameters:
-  Env                            : "dev"
-  S3BucketNamePrivateContent     : "enaia-dev-s3-private-content"
+  S3BucketNamePrivateContent     : "enaia-devel-s3-private-content"
   S3BucketPathPrivateContent     : "/path1/*" # Path in cloudfront to route to this origin
-  S3BucketNameImages             : "enaia-dev-s3-images"
+  S3BucketNameImages             : "enaia-devel-s3-images"
   S3BucketPathImages             : "/path2/*" # Path in cloudfront to route to this origin
   CustomOriginName               : "www.customorigin.com" # This will be the default one in Cloudfront
-  CloudfrontAlias                : "assets.enaia.co"
+  CloudfrontAlias                : "assets2.enaia.co"
   CFViewerCertificateARN         : "arn:aws:acm:us-east-1:020275857710:certificate/c48210c0-8550-4d93-a849-b6ab28eec5a9"
