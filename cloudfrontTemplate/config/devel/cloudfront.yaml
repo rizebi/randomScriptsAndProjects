@@ -16,6 +16,6 @@ parameters:
   S3BucketPathPrivateContent     : "/path1/*" # Path in cloudfront to route to this origin
   S3BucketNameImages             : "enaia-devel-s3-images"
   S3BucketPathImages             : "/path2/*" # Path in cloudfront to route to this origin
-  CustomOriginName               : "www.customorigin.com" # This will be the default one in Cloudfront
-  CloudfrontAlias                : "assets2.enaia.co"
+  CustomOriginName               : "demo.enaia.co" # This will be the default one in Cloudfront
+  CloudfrontAlias                : "assets.enaia.co"
   CFViewerCertificateARN         : "arn:aws:acm:us-east-1:020275857710:certificate/c48210c0-8550-4d93-a849-b6ab28eec5a9"
