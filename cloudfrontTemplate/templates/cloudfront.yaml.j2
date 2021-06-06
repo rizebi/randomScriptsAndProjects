@@ -15,9 +15,6 @@ Outputs:
     Value: !Sub "${CloudfrontAlias}"
 
 Parameters:
-  Env:
-    Description: The environment name. This must be unique between deployments
-    Type: String
   S3BucketNamePrivateContent:
     Description: S3 Bucket Name for Private Content
     Type: String
@@ -41,20 +38,7 @@ Parameters:
     Type: String
 
 Resources:
-  S3BucketPrivateContent:
-    Properties:
-      BucketName: !Sub "${S3BucketNamePrivateContent}"
-    Type: "AWS::S3::Bucket"
-
-  S3BucketImages:
-    Properties:
-      BucketName: !Sub "${S3BucketNameImages}"
-    Type: "AWS::S3::Bucket"
-
   CloudfrontDistribution:
-    DependsOn:
-      - S3BucketPrivateContent
-      - S3BucketImages
     Properties:
       DistributionConfig:
         Enabled: 'true'
@@ -81,11 +65,11 @@ Resources:
             ForwardedValues:
               QueryString: 'true'
         Origins:
-          - DomainName: !Sub "${S3BucketNamePrivateContent}.s3.amazonaws.com"
+          - DomainName: !Sub "${S3BucketNamePrivateContent}.s3.us-west-2.amazonaws.com"
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudfrontOriginAccessIdentityPrivate.Id}"
             Id: S3BucketPrivateContentOrigin
-          - DomainName: !Sub "${S3BucketNameImages}.s3.amazonaws.com"
+          - DomainName: !Sub "${S3BucketNameImages}.s3.us-west-2.amazonaws.com"
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudfrontOriginAccessIdentityImages.Id}"
             Id: S3BucketImagesOrigin
@@ -111,7 +95,6 @@ Resources:
 
   S3BucketPrivateContentPolicy:
     DependsOn:
-      - S3BucketPrivateContent
       - CloudfrontOriginAccessIdentityPrivate
     Properties:
       Bucket: !Sub "${S3BucketNamePrivateContent}"
@@ -127,7 +110,6 @@ Resources:
 
   S3BucketImagesPolicy:
     DependsOn:
-      - S3BucketImages
       - CloudfrontOriginAccessIdentityImages
     Properties:
       Bucket: !Sub "${S3BucketNameImages}"
