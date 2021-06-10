@@ -1,0 +1,11 @@
+version: '3'
+services:
+  github-comment-counter:
+    image: github-comment-counter
+    container_name: github-comment-counter
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ./config:/application/config/
