@@ -2,21 +2,28 @@ import os
 import sys
 import time # for sleep
 import logging # for logging
+import telepot # for telegram use
 import datetime # for logging
 import requests # for Telegram API manipulation
 import traceback # for error handling
 
-# pip3 install requests
+## Author: Eusebiu Rizescu
+## Email: rizescueusebiu@gmail.com
+
+# pip3 install requests telepot
 
 ## Variables
-currentDir = os.getcwd()
-groupsFile = "groups.txt" # Relative path to the groups file. One group per line. to set a different sleep time between messages, other than the default one, add at the end of group name TODO ", X", and replace X with the number of minutes
+botToken = "TELEGRAM_TOKEN_TO_REPLACE"
 messageFile = "message.txt" # Relative path to the message file that contains the text of the sending message
-picture = "" # Path to picture. Leave "" if no picture attached
-groupsMappingFile = "mapping.txt"
-defaultSleepMinutesBetweenMessages = 0.05 #TODO replace with 3
-sleepSecondsBetweenRuns = 5 #TODO # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
-botToken = "REPLACE_BOT_NAME"
+groupsFile = "groups.txt" # Relative path to the groups file. One chat id per line.
+pictureFile = "picturePath.txt" # Relative path to the groups file. This file contians path to the image, or is empty
+groupsMappingFile = "mapping.txt" # Relative path to the message file. It will be created by script, in order to have a mapping between GroupName and ChatId
+defaultSleepMinutesBetweenMessages = 3
+sleepSecondsBetweenRuns = 30 # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
+
+## Needed variables
+currentDir = os.getcwd()
+lastUpdateEvent = 0
 
 # Logging function
 def getLogger():
@@ -42,41 +49,53 @@ def getLogger():
 
 # Function that sends a message to a chatId
 def sendTelegramMessage(log, chatId):
-  log = config["log"]
   try:
-    payload = {
-        'chat_id': config["bot_chat_id"],
-        'text': "[bot]" + message,
-        'parse_mode': 'HTML'
-    }
-    if config["telegram_notifications"] == "true":
-      requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=config["bot_token"]), data=payload).content
+    # Read message
+    message = open(os.path.join(currentDir, messageFile), mode="r").read()
+    bot = telepot.Bot(botToken)
+    picturePathToSend = open(os.path.join(currentDir, pictureFile), mode="r").read().replace(os.linesep, "").strip()
+    if picturePathToSend == "":
+      # Send only message
+      bot.sendMessage(chatId, message)
+    else:
+      # Send photo with caption
+      bot.sendPhoto(chatId, caption=message, photo=open(picturePathToSend, "rb"))
+
+    return True
   except Exception as e:
     log.info("Error when sending Telegram message: {}".format(e))
     tracebackError = traceback.format_exc()
     log.info(tracebackError)
+    return False
 
 # Read the group mapping files to get the already known chat ids
 # A line in group mapping file is:
 # Name: <<<My_Group_X>>>, ChatId: <<<1938451051>>>
 def readGroupsMapping(log):
-  groupsMappings = open(os.path.join(currentDir, groupsMappingFile), "r")
-  groupsMappings = groupsMappings.read().split(os.linesep)
   alreadyKnownGroups = []
-  # Get group name from
-  for groupMapping in groupsMappings:
-    groupMapping = groupMapping.strip()
-    if groupMapping == "" or groupMapping == os.linesep:
-      continue
-    try:
-      groupName = groupMapping.split("<<<")[1].split(">>>")[0]
-      alreadyKnownGroups.append(groupName)
-    except Exception as e:
-      log.info("ERROR when reading from group mapping, when processing: " + groupMapping)
-      tracebackError = traceback.format_exc()
-      log.info(tracebackError)
+  try:
+    groupsMappings = open(os.path.join(currentDir, groupsMappingFile), "r")
+    groupsMappings = groupsMappings.read().split(os.linesep)
+    # Get group name from
+    for groupMapping in groupsMappings:
+      groupMapping = groupMapping.strip()
+      if groupMapping == "" or groupMapping == os.linesep:
+        continue
+      try:
+        groupName = groupMapping.split("<<<")[1].split(">>>")[0]
+        alreadyKnownGroups.append(groupName)
+      except Exception as e:
+        log.info("ERROR when reading from group mapping, when processing: " + groupMapping)
+        tracebackError = traceback.format_exc()
+        log.info(tracebackError)
+
+  except Exception as e:
+    log.info("Error when reading groups mapping for bot: {}".format(e))
+    tracebackError = traceback.format_exc()
+    log.info(tracebackError)
 
   return alreadyKnownGroups
+
 
 # For each run, get the updates of the bot and update the group mapping file with the new
 # chat_ids. When a bot is added to a group, an update is accessible, and we parse that, and
@@ -84,11 +103,17 @@ def readGroupsMapping(log):
 def updateGroupsMapping(log):
 
   try:
+    # Get groups from groups mapping
     alreadyKnownGroups = readGroupsMapping(log)
-    response = requests.get("https://api.telegram.org/bot" + botToken + "/getUpdates")
-    response = response.json()
+
+    # Get updates from Telegram
+    bot = telepot.Bot(botToken)
+    global lastUpdateEvent
+    response = bot.getUpdates(offset=lastUpdateEvent)
+    lastUpdateEvent = response[-1]["update_id"]
+
     # For each update, try to get if the bot was added in a group
-    for update in response["result"]:
+    for update in response:
       if "my_chat_member" not in update:
         continue
       # Get the groupName and chatId
@@ -112,11 +137,11 @@ def updateGroupsMapping(log):
 # 23235324, 4    <- first is the chat id, then comma then the interval between messages
 # or
 # 34534534       <- the chat id, and the default interval between messages will be used
-def readGroups(log):
+def readGroups(log, oldDict):
   groups = open(os.path.join(currentDir, groupsFile), "r")
-  groups = groupsList.read().split(os.linesep)
+  groups = groups.read().split(os.linesep)
 
-  groupsList = []
+  groupsDict = {}
   # Get group name from
   for group in groups:
     group = group.strip()
@@ -124,14 +149,17 @@ def readGroups(log):
       continue
     if "," in group:
       chatId = group.split(",")[0].strip()
-      messageInterval = group.split(",")[1].strip()
+      messageInterval = float(group.split(",")[1].strip())
     else:
       chatId = group
       messageInterval = defaultSleepMinutesBetweenMessages
     # Add the group to the dict
-    groupsList.append({"chatId": chatId, "messageInterval": messageInterval, "lastMessageTimestamp": 0})
+    if chatId in oldDict.keys():
+      groupsDict[chatId] = {"messageInterval": messageInterval, "lastMessageTimestamp": oldDict[chatId]["lastMessageTimestamp"]}
+    else:
+      groupsDict[chatId] = {"messageInterval": messageInterval, "lastMessageTimestamp": 0}
 
-  return groupsList
+  return groupsDict
 
 # Main function
 def mainFunction():
@@ -139,6 +167,17 @@ def mainFunction():
   log.info("###################################################### New MAIN run")
 
   try:
+    # Break if config files not found
+    if os.path.isfile(os.path.join(currentDir, messageFile)) is False:
+      log.info("Message file " + messageFile + " not found. Exiting.")
+    if os.path.isfile(os.path.join(currentDir, groupsFile)) is False:
+      log.info("Message file " + groupsFile + " not found. Exiting.")
+    if os.path.isfile(os.path.join(currentDir, pictureFile)) is False:
+      log.info("Message file " + pictureFile + " not found. Exiting.")
+
+    # At the start we assume that we should send messages to all groups
+    oldGroupsDict = {}
+
     # Main while
     while True:
       log.info("##################### New run")
@@ -146,14 +185,30 @@ def mainFunction():
       updateGroupsMapping(log)
 
       # Read the groups
-      groups = readGroups(log)
+      groups = readGroups(log, oldGroupsDict)
+
+      log.info("Groups: " + str(groups))
 
       # Send the message
-      for group in groups:
-        now = datetime.datetime.now()
-        if now - group
+      for group in groups.keys():
 
+        log.info("### Processing group: " + group)
+        now = time.time()
+
+        if now - groups[group]["lastMessageTimestamp"] < groups[group]["messageInterval"] * 60:
+          log.info("Time interval not already passed. Wait " + str(groups[group]["messageInterval"] * 60 - (now - groups[group]["lastMessageTimestamp"])) + " seconds.")
+        else:
+          log.info("Time interval passed. Sending message")
+          status = sendTelegramMessage(log, group)
+          if status == True:
+            log.info("Message successfully sent.")
+            groups[group]["lastMessageTimestamp"] = now
+          else:
+            log.info("Error, message not sent.")
+
+      oldGroupsDict = groups
       # Sleep between runs
+      log.info("Sleeping " + str(sleepSecondsBetweenRuns) + " seconds.")
       time.sleep(sleepSecondsBetweenRuns)
 
   ##### END #####
