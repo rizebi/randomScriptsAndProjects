@@ -8,8 +8,6 @@ import traceback # for error handling
 
 # pip3 install requests
 
-# Todo for windows
-
 ## Variables
 currentDir = os.getcwd()
 groupsFile = "groups.txt" # Relative path to the groups file. One group per line. to set a different sleep time between messages, other than the default one, add at the end of group name TODO ", X", and replace X with the number of minutes
@@ -19,8 +17,6 @@ groupsMappingFile = "mapping.txt"
 defaultSleepMinutesBetweenMessages = 0.05 #TODO replace with 3
 sleepSecondsBetweenRuns = 5 #TODO # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
 botToken = "REPLACE_BOT_NAME"
-
-# https://api.telegram.org/bot1648992630:AAE4-4yvsvBilhCqMB8d_w1MHU0Fxr9wmX0/getUpdates
 
 # Logging function
 def getLogger():
@@ -44,17 +40,33 @@ def getLogger():
   log = logging.getLogger()
   return log
 
+# Function that sends a message to a chatId
+def sendTelegramMessage(log, chatId):
+  log = config["log"]
+  try:
+    payload = {
+        'chat_id': config["bot_chat_id"],
+        'text': "[bot]" + message,
+        'parse_mode': 'HTML'
+    }
+    if config["telegram_notifications"] == "true":
+      requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=config["bot_token"]), data=payload).content
+  except Exception as e:
+    log.info("Error when sending Telegram message: {}".format(e))
+    tracebackError = traceback.format_exc()
+    log.info(tracebackError)
+
 # Read the group mapping files to get the already known chat ids
 # A line in group mapping file is:
 # Name: <<<My_Group_X>>>, ChatId: <<<1938451051>>>
 def readGroupsMapping(log):
   groupsMappings = open(os.path.join(currentDir, groupsMappingFile), "r")
-  groupsMappings = groupsMappings.read().split("\n")
+  groupsMappings = groupsMappings.read().split(os.linesep)
   alreadyKnownGroups = []
   # Get group name from
   for groupMapping in groupsMappings:
     groupMapping = groupMapping.strip()
-    if groupMapping == "" or groupMapping == "\n":
+    if groupMapping == "" or groupMapping == os.linesep:
       continue
     try:
       groupName = groupMapping.split("<<<")[1].split(">>>")[0]
@@ -88,34 +100,38 @@ def updateGroupsMapping(log):
       else:
         log.info("This is a new group, add it to the group mapping file")
         with open(os.path.join(currentDir, groupsMappingFile), 'a') as file:
-          file.write("Name: <<<" + groupName + ">>>, ChatId: <<<" + chatId + ">>>\n")
+          file.write("Name: <<<" + groupName + ">>>, ChatId: <<<" + chatId + ">>>" + os.linesep)
 
   except Exception as e:
     log.info("Error when getting Updates for bot: {}".format(e))
     tracebackError = traceback.format_exc()
     log.info(tracebackError)
 
-# Function that read domains from the file
+# Function that read groups to send messages to from the file
+# Groups file has the following format:
+# 23235324, 4    <- first is the chat id, then comma then the interval between messages
+# or
+# 34534534       <- the chat id, and the default interval between messages will be used
 def readGroups(log):
-  domainsList = open(os.path.join(currentDir, domainsFile), "r") # Read data
-  domainsList = domainsList.read().split("\n")
-  log.info(domainsList)
-  # Remove spaces and cast to lowercase
-  i = 0
-  while i < len(domainsList):
-    domainsList[i] = domainsList[i].strip().lower()
-    domainsList[i] = domainsList[i].replace("https://", "")
-    domainsList[i] = domainsList[i].replace("/", "")
-    i += 1
-  # Remove "\n" from list
-  while "\n" in domainsList:
-    domainsList.remove("\n")
-  # Remove "" from list
-  while "" in domainsList:
-    domainsList.remove("")
-  log.info(domainsList)
-  return domainsList
+  groups = open(os.path.join(currentDir, groupsFile), "r")
+  groups = groupsList.read().split(os.linesep)
 
+  groupsList = []
+  # Get group name from
+  for group in groups:
+    group = group.strip()
+    if group == "" or group == os.linesep:
+      continue
+    if "," in group:
+      chatId = group.split(",")[0].strip()
+      messageInterval = group.split(",")[1].strip()
+    else:
+      chatId = group
+      messageInterval = defaultSleepMinutesBetweenMessages
+    # Add the group to the dict
+    groupsList.append({"chatId": chatId, "messageInterval": messageInterval, "lastMessageTimestamp": 0})
+
+  return groupsList
 
 # Main function
 def mainFunction():
@@ -126,11 +142,16 @@ def mainFunction():
     # Main while
     while True:
       log.info("##################### New run")
-      # Read the groups
-      # groups = readGroups(log)
-
       # Get bot updates in order to see if the bot was added to a new group.
       updateGroupsMapping(log)
+
+      # Read the groups
+      groups = readGroups(log)
+
+      # Send the message
+      for group in groups:
+        now = datetime.datetime.now()
+        if now - group
 
       # Sleep between runs
       time.sleep(sleepSecondsBetweenRuns)
