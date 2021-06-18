@@ -15,11 +15,6 @@ The script continuously send messages to Telegram groups, with configurable slee
 - pip3
 - Run: pip3 install telethon
 
-### How to create a Telegram bot
-
-Create bot (tutorial on the web, basically download app, search for user: BotFather, and use command /newbot), and keep the TOKEN
-For example you can use this tutorial: https://sendpulse.com/knowledge-base/chatbot/create-telegram-chatbot
-
 ### How to configure the bot for the first time
 
 - Make sure prerequisites are installed

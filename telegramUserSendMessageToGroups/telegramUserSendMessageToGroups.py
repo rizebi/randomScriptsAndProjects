@@ -1,6 +1,7 @@
 import os
 import sys
 import time # for sleep
+import codecs # for emoji support
 import logging # for logging
 import datetime # for logging
 import traceback # for error handling
@@ -50,7 +51,7 @@ def getLogger():
 def sendTelegramMessage(log, client, groupName):
   try:
     # Read message
-    message = open(os.path.join(currentDir, messageFile), mode="r").read()
+    message = codecs.open(os.path.join(currentDir, messageFile), mode="r", encoding='utf-8').read()
     picturePathToSend = open(os.path.join(currentDir, pictureFile), mode="r").read().replace(os.linesep, "").strip()
     if picturePathToSend == "":
       # Send only message
@@ -73,7 +74,7 @@ def sendTelegramMessage(log, client, groupName):
 # my_other_group       <- the groupName, and the default interval between messages will be used
 def readGroups(log, oldDict):
   groups = open(os.path.join(currentDir, groupsFile), "r")
-  groups = groups.read().split(os.linesep)
+  groups = groups.read().replace("\r\n", os.linesep).replace("\n", os.linesep).split(os.linesep)
 
   groupsDict = {}
   # Get group name from
