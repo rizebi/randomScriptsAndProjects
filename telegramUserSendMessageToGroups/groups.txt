@@ -1,2 +1,2 @@
-botgrouptestchat, 0.4
-cevatarerau
+botgrouptestchat, 0.4, messages/message1.txt, pictures/picture1.jpg
+cevatarerau, 3, messages/message1.txt
