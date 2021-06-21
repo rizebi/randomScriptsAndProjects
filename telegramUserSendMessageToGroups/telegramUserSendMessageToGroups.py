@@ -13,12 +13,9 @@ from telethon import TelegramClient, events, sync # for telegram use
 # pip3 install telethon
 
 ## Variables
-api_id = "API_ID_TO_REPLACE"
-api_hash = "API_KEY_TO_REPLACE"
-messageFile = "message.txt" # Relative path to the message file that contains the text of the sending message
+api_id = "6019497"
+api_hash = "d20d859a1504390e1e3a2b5b2210c2aa"
 groupsFile = "groups.txt" # Relative path to the groups file. One groupName per line.
-pictureFile = "picturePath.txt" # Relative path to the groups file. This file contians path to the image, or is empty
-defaultSleepMinutesBetweenMessages = 3
 sleepSecondsBetweenRuns = 30 # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
 
 ## Needed variables
@@ -48,17 +45,17 @@ def getLogger():
   return log
 
 # Function that sends a message to a groupName
-def sendTelegramMessage(log, client, groupName):
+def sendTelegramMessage(log, client, groupName, messageFile, imageFile):
   try:
     # Read message
     message = codecs.open(os.path.join(currentDir, messageFile), mode="r", encoding='utf-8').read()
-    picturePathToSend = open(os.path.join(currentDir, pictureFile), mode="r").read().replace(os.linesep, "").strip()
-    if picturePathToSend == "":
+
+    if imageFile == "":
       # Send only message
       client.send_message(groupName, message)
     else:
       # Send photo with caption
-      client.send_file(groupName, picturePathToSend, caption=message)
+      client.send_file(groupName, imageFile, caption=message)
 
     return True
   except Exception as e:
@@ -69,9 +66,7 @@ def sendTelegramMessage(log, client, groupName):
 
 # Function that read groups to send messages to from the file
 # Groups file has the following format:
-# my_special_group, 4    <- first is the groupName, then comma then the interval between messages
-# or
-# my_other_group       <- the groupName, and the default interval between messages will be used
+# my_special_group, 4, path_to_message, optional_path_to_image    <- first is the groupName, interval, path to message, path to image
 def readGroups(log, oldDict):
   groups = open(os.path.join(currentDir, groupsFile), "r")
   groups = groups.read().replace("\r\n", os.linesep).replace("\n", os.linesep).split(os.linesep)
@@ -82,17 +77,21 @@ def readGroups(log, oldDict):
     group = group.strip()
     if group == "" or group == os.linesep:
       continue
-    if "," in group:
-      groupName = group.split(",")[0].strip()
-      messageInterval = float(group.split(",")[1].strip())
+    groupName = group.split(",")[0].strip()
+    messageInterval = float(group.split(",")[1].strip())
+    messageFile = group.split(",")[2].strip()
+    if len(group.split(",")) == 4:
+      imageFile = group.split(",")[3].strip()
     else:
-      groupName = group
-      messageInterval = defaultSleepMinutesBetweenMessages
+      imageFile = ""
+
+
     # Add the group to the dict
+    groupsDict[groupName] = {"messageInterval": messageInterval, "messageFile": messageFile, "imageFile": imageFile}
     if groupName in oldDict.keys():
-      groupsDict[groupName] = {"messageInterval": messageInterval, "lastMessageTimestamp": oldDict[groupName]["lastMessageTimestamp"]}
+      groupsDict[groupName]["lastMessageTimestamp"] = oldDict[groupName]["lastMessageTimestamp"]
     else:
-      groupsDict[groupName] = {"messageInterval": messageInterval, "lastMessageTimestamp": 0}
+      groupsDict[groupName]["lastMessageTimestamp"] = 0
 
   return groupsDict
 
@@ -103,12 +102,8 @@ def mainFunction():
 
   try:
     # Break if config files not found
-    if os.path.isfile(os.path.join(currentDir, messageFile)) is False:
-      log.info("Message file " + messageFile + " not found. Exiting.")
     if os.path.isfile(os.path.join(currentDir, groupsFile)) is False:
-      log.info("Message file " + groupsFile + " not found. Exiting.")
-    if os.path.isfile(os.path.join(currentDir, pictureFile)) is False:
-      log.info("Message file " + pictureFile + " not found. Exiting.")
+      log.info("Groups file " + groupsFile + " not found. Exiting.")
 
     # At the start we assume that we should send messages to all groups
     oldGroupsDict = {}
@@ -136,7 +131,7 @@ def mainFunction():
           log.info("Time interval not already passed. Wait " + str(groups[group]["messageInterval"] * 60 - (now - groups[group]["lastMessageTimestamp"])) + " seconds.")
         else:
           log.info("Time interval passed. Sending message")
-          status = sendTelegramMessage(log, client, group)
+          status = sendTelegramMessage(log, client, group, groups[group]["messageFile"], groups[group]["imageFile"])
           if status == True:
             log.info("Message successfully sent.")
             groups[group]["lastMessageTimestamp"] = now
