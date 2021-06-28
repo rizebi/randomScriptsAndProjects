@@ -6,8 +6,23 @@ import datetime
 from bs4 import BeautifulSoup
 from selenium import webdriver # for scraping
 from selenium.webdriver.chrome.options import Options
+import subprocess # for executing bash
 
 path = "settings.ini"
+
+def executeCommand(command):
+  error = ""
+  output = ""
+  print("Executing: " + command)
+  try:
+    output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+    output = output.decode('utf-8')
+  except Exception as e:
+    error = "ERROR: " + str(e.returncode) + "  " + str(e) + "\n"
+    output = repr(e)  # to get the output even when error
+  #print("Output: " + output)
+  return output, error
+
 
 
 while 1<2:
@@ -18,7 +33,8 @@ while 1<2:
 
     for section in config.sections():
         address = config.get(section, "address")
-        
+        print("###### Kill older processes of chromedriver and xvfb")
+        output, error = executeCommand('kill -kill $(ps -eaf | grep -i chrome | grep -v grep | tr -s " " | cut -d " " -f 2)')
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
