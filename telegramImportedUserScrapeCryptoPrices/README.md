@@ -1,3 +1,6 @@
+Conectare masina:
+ssh -i fisier centos@18.188.184.27
+
 Dupa ce te loghezi dai "sudo su"
 Pentru a adauga un nou canal, trebuie adaugat botul in noul canal si apoi trebuie rulat:
 python3 getChannelID.py

@@ -1,6 +1,5 @@
 import traceback # for error handling
 import configparser
-import undetected_chromedriver.v2 as uc
 import time
 import datetime
 from bs4 import BeautifulSoup
@@ -45,27 +44,43 @@ while 1<2:
         try:     
             print ('https://charts.bogged.finance/?token=' + address)
             driver.get('https://charts.bogged.finance/?token=' + address)  # known url using cloudflare's "under attack mode"
-            print ("Sleeping 5 sec for security check")
-            time.sleep (5)
+            print ("Sleeping 10 sec for page to load")
+            time.sleep (10)
             #driver.save_screenshot('poocoin.png')
             content = driver.page_source
             #print ("CONTENT:")
             #print (content)
             #print ("End content")
             soup = BeautifulSoup(content, features="html.parser")
-            divMarketCap = soup.findAll('div', attrs={'class':'my-1 flex flex-row justify-start space-x-3 md:pt-0 pt-3 sm:space-x-6 w-full md:w-auto border-t md:border-t-0 border-gray-200 dark:border-gray-700'})
-            for span in divMarketCap[0].findAll('span'):
-                if "Marketcap" in str(span) and "$" in str(span):
-                    marketcap = span.findAll('h4')[0].text.strip()
+            try:
+              divMarketCap = soup.findAll('div', attrs={'class':'items-center lg:h-16 h-10 lg:bg-transparent bg-white dark:bg-transparent flex flex-row justify-center text-center lg:text-left lg:justify-start space-x-3 lg:pt-0 lg:my-1.5 my-0 sm:space-x-6 w-full lg:w-auto'})
+              for span in divMarketCap[0].findAll('span'):
+                  if "Marketcap" in str(span) and "$" in str(span):
+                      marketcap = span.findAll('h4')[0].text.strip()
+            except:
+              marketcap = 0
 
-            price = "$" + str(soup.findAll('title')).split("$")[1].split(" ")[0]
-            
+            try:
+              price = "$" + str(soup.findAll('title')).split("$")[1].split(" ")[0]
+            except:
+              price = 0
+
+            try:
+              divsIndex = soup.findAll('div', attrs={'flex flex-row space-x-2 items-center'})
+              for divIndex in divsIndex:
+                for h4 in divIndex.findAll('h4'):
+                    if "%" in str(h4):
+                      index = h4.text.strip().replace("%", "")
+            except:
+              index = 0
+
             print(datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)"))
-            string = 'Market Cap= '+marketcap+'   Price = '+ price
+            string = 'Market Cap= '+marketcap+'   Price = '+ price+'   Index = '+ index
             print(string)
             config.set(section, "datetime", datetime.datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)"))
             config.set(section, "price", price)
             config.set(section, "marketcap", marketcap)
+            config.set(section, "index", index)
             with open(path, "w") as config_file:
                 config.write(config_file)
             driver.quit()
