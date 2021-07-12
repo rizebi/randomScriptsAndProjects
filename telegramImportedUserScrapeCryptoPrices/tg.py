@@ -1,11 +1,10 @@
 from telethon import TelegramClient, events
-import undetected_chromedriver.v2 as uc
 import time
 import configparser
 
 from bs4 import BeautifulSoup
-api_id = REPLACE
-api_hash = 'REPLACE'
+api_id = 6879411
+api_hash = '2dd2b314916470e49889845946162dd4'
 bot_token = ''
 
 channelIdList = [553270668, 521440549, 561526530, 572171595, 597032167]
@@ -22,6 +21,8 @@ template = (
        '💸 <b>{price}</b>\n'
        'Marketcap \n'
        '🏦 <b>{marketCap} </b>\n'
+       'Last 24h change \n'
+       '📊 <b>{index}% </b>\n'
        ' \n'
        'Links related to ${coinShortName} \n'
        '🔘 Check {coinName} <a href="{link1}">Website</a> \n'
@@ -53,8 +54,9 @@ def genMessage(channelId):
     link2 = config.get(channelId, "link2")
     address = config.get(channelId, "address")
     marketCap= config.get(channelId, "marketCap")
-    str = template.format(coinName=coinName, coinShortName=coinShortName,price=price,marketCap=marketCap,link1=link1,link2=link2,address=address) 
-    print(str)
+    index= config.get(channelId, "index")
+    str = template.format(coinName=coinName, coinShortName=coinShortName,price=price,marketCap=marketCap,index=index,link1=link1,link2=link2,address=address)
+    print(str.encode('utf-8'))
     return str
 
 
@@ -62,7 +64,7 @@ def genMessage(channelId):
 
 @client.on(events.NewMessage(channelIdList))
 async def main(event):
-     print(event.raw_text)
+     print(event.raw_text.encode('utf-8'))
      if event.raw_text == '/price':
          await client.send_message(event.chat_id, message=genMessage(str(abs(int(event.chat_id)))),parse_mode='html', link_preview=False)
 
