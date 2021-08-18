@@ -6,21 +6,60 @@ from shutil import copyfile
 from PIL import Image, ImageOps
 from preview_generator.manager import PreviewManager
 
+# {
+#   "dest_bucket": "lambda-generate-preview-image-destination",
+#   "dest_path": "pig_#{width}_#{height}.png",
+#   "error_sns": "arn:aws:sns:us-west-2:020275857710:file-previewer-failed-dev-neil",
+#   "format": "png",
+#   "ok_sns": "arn:aws:sns:us-west-2:020275857710:file-previewer-succeeded-dev-neil",
+#   "src_bucket": "lambda-generate-preview-image-source",
+#   "src_path": "source_folder/pig.jpg",
+#   "request_id": "23453rjdkwfhdskjfh29er82349rewfds",
+#   "dimensions": [
+#     {
+#       "width": "1000",
+#       "height": "500"
+#     },
+#     {
+#       "width": "500",
+#       "height": "250"
+#     },
+#     {
+#       "width": "250",
+#       "height": "120"
+#     }
+#   ]
+# }
+
 def lambda_handler(event, context):
 
   ### Inputs
-  print("Event: " + str(event))
+  print("#### Received event is: " + str(event))
   src_bucket = event["src_bucket"]
   src_path = event["src_path"]
   dest_bucket = event["dest_bucket"]
   dest_path = event["dest_path"]
-  wanted_width = int(event["width"])
-  wanted_height = int(event["height"])
+  dimensions = event["dimensions"]
   output_format = event["format"]
   ok_sns = event["ok_sns"]
   error_sns = event["error_sns"]
+  request_id = event["request_id"]
 
   try:
+    ### Remove the leading slash from src_path and dest_path
+#     if src_path[0] == "/":
+#       scr_path = src_path[1:]
+#     if dest_path[0] == "/":
+#       dest_path = dest_path[1:]
+
+    ### Get the maximum size from the dimensions received
+    maximum_width = 0
+    maximum_height = 0
+    for dimension in dimensions:
+      if int(dimension["width"]) > maximum_width:
+        maximum_width = int(dimension["width"])
+        maximum_height = int(dimension["height"])
+
     ### Copy the file from S3:
     print("Copy file from source S3")
     if src_bucket != "":
@@ -77,7 +116,7 @@ def lambda_handler(event, context):
     ### Generate preview
     print("Generating preview")
     manager = PreviewManager("/tmp/cache", create_folder= True)
-    preview_image = manager.get_jpeg_preview(source_file, width=wanted_width, height=wanted_height)
+    preview_image = manager.get_jpeg_preview(source_file, width=maximum_width, height=maximum_height)
     print("Successfully generated preview")
 
     ### Make sure the image has the expected size and format
@@ -86,38 +125,72 @@ def lambda_handler(event, context):
     img = Image.open(preview_image)
 
     # Calculate the differences between actual sizes and wanted sizes
-    delta_w = wanted_width - img.width
-    delta_h = wanted_height - img.height
+    delta_w = maximum_width - img.width
+    delta_h = maximum_height - img.height
 
     # Then actual sizes is odd (not even), the we need to add one more pixel
-    precision_pixel_w = wanted_width - img.width - int(delta_w/2) - int(delta_w-(delta_w/2))
-    precision_pixel_h = wanted_height - img.height - int(delta_h/2) - int(delta_h-(delta_h/2))
+    precision_pixel_w = maximum_width - img.width - int(delta_w/2) - int(delta_w-(delta_w/2))
+    precision_pixel_h = maximum_height - img.height - int(delta_h/2) - int(delta_h-(delta_h/2))
 
     # Resize the image
     ltrb_border=(int(delta_w/2), int(delta_h/2), int(delta_w-(delta_w/2)) + precision_pixel_w, int(delta_h-(delta_h/2)) + precision_pixel_h)
     img_with_border = ImageOps.expand(img, border=ltrb_border, fill='white')
     output_file = "/tmp/output_preview." + output_format
-    img_with_border.save(output_file)
-    print("Successfully resized and formatted")
+    img_with_border.convert('RGB').save(output_file)
+    print("Successfully resized and formatted for the maximum (" + str(maximum_width) + ":" + str(maximum_height) + ") wanted size")
 
     ### Copy to S3
-    print("Copy preview to destination bucket")
+    print("Copy the maximum (" + str(maximum_width) + ":" + str(maximum_height) + ") preview to destination bucket")
     if dest_bucket != "":
       client = boto3.client('s3')
-      client.upload_file(output_file, dest_bucket, dest_path)
+      client.upload_file(output_file, dest_bucket, dest_path.replace("#{width}", str(maximum_width)).replace("#{height}", str(maximum_height)))
     else:
       # If the dest_bucket == 0 we will not copy from S3, but will copy on local path
-      copyfile(output_file, dest_path)
-    print("Successfully copied preview to destination bucket")
+      copyfile(output_file, dest_path.replace("#{width}", str(maximum_width)).replace("#{height}", str(maximum_height)))
+    print("Successfully copied the maximum (" + str(maximum_width) + ":" + str(maximum_height) + ") preview to destination bucket")
+
+    ### Transform, and copy all other wanted dimensions to S3 bucket
+    # TODO
+    for dimension in dimensions:
+      # Get dimensions
+      current_width = int(dimension["width"])
+      current_height = int(dimension["height"])
+
+      # Skip if the dimension is the maximum one
+      if current_width == maximum_width and current_height == maximum_height:
+        continue
+
+      # Open image
+      image = Image.open(output_file)
+      new_image = image.resize((current_width, current_height))
+      output_file_resized = "/tmp/output_preview_resized." + output_format
+      new_image.save(output_file_resized)
+
+      ### Copy to S3
+      print("Copy the dimension (" + str(current_width) + ":" + str(current_height) + ") to destination bucket")
+      if dest_bucket != "":
+        client = boto3.client('s3')
+        client.upload_file(output_file_resized, dest_bucket, dest_path.replace("#{width}", str(current_width)).replace("#{height}", str(current_height)))
+      else:
+        # If the dest_bucket == 0 we will not copy from S3, but will copy on local path
+        copyfile(output_file_resized, dest_path.replace("#{width}", str(current_width)).replace("#{height}", str(current_height)))
+      print("Successfully copied the dimension (" + str(current_width) + ":" + str(current_height) + ") preview to destination bucket")
 
     ### Send ok message to ok SNS
     print("Sending OK to SNS")
     if src_bucket != "":
       # If the src_bucket is not empty, then the function is running locally for dev purposes, so no need to send SNS
+      # Compose the OK JSON
+      okJSON = {
+        "success": "true",
+        "request_id": request_id,
+        "src_bucket": src_bucket,
+        "src_path": src_path
+      }
       client = boto3.client('sns')
       response = client.publish(
           TopicArn=ok_sns,
-          Message="Preview generated successfully for: " + src_bucket + src_path
+          Message=str(okJSON)
       )
     print("Successfully send OK to SNS")
     return "OK"
@@ -128,12 +201,19 @@ def lambda_handler(event, context):
     print(tracebackError)
     ### Send error message to error SNS
     print("Sending ERROR to SNS")
+    # Compose the ERROR JSON
+    errorJSON = {
+      "success": "false",
+      "request_id": request_id,
+      "src_bucket": src_bucket,
+      "src_path": src_path
+    }
     if src_bucket != "":
       # If the src_bucket is not empty, then the function is running locally for dev purposes, so no need to send SNS
       client = boto3.client('sns')
       response = client.publish(
           TopicArn=error_sns,
-          Message="Preview FAILED to generate for: " + src_bucket + src_path
+          Message=str(errorJSON)
       )
     print("Successfully send ERROR to SNS")
     return "ERROR"
