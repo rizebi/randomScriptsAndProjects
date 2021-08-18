@@ -6,7 +6,9 @@ docker build -t lambda-generate-preview-image .
 docker run -p 9000:8080 -v /Users/eusebiu.rizescu/Data/Git/randomScriptsAndProjects/lambdaPythonGeneratePreviewFiles:/mnt/data lambda-generate-preview-image
 
 ##### Invoke function
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"src_bucket": "", "src_path": "/preview-function/big.xlsx", "dest_bucket": "", "dest_path": "/preview-function/output.jpg", "width": "500", "height": "1000", "format": "png", "ok_sns": "arn::blabla", "error_sns": "arn::blabla"}'
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"src_bucket": "", "src_path": "/mnt/data/vanilla-cakes.pdf", "dest_bucket": "", "dest_path": "/mnt/data/output_#{width}_#{height}.jpg", "format": "png", "request_id": "d23df3d2sg3sf3ew", "ok_sns": "arn::blabla", "error_sns": "arn::blabla", "dimensions": [{"width": "1000", "height": "500"}, {"width": "500", "height": "250"}, {"width": "250", "height": "120"}]}'
+
+
 
 ### How to create the Lambda Function
 1) Upload previously created image to ECR (container registry for AWS)
