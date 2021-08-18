@@ -150,7 +150,6 @@ def lambda_handler(event, context):
     print("Successfully copied the maximum (" + str(maximum_width) + ":" + str(maximum_height) + ") preview to destination bucket")
 
     ### Transform, and copy all other wanted dimensions to S3 bucket
-    # TODO
     for dimension in dimensions:
       # Get dimensions
       current_width = int(dimension["width"])
