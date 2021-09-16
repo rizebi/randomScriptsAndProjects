@@ -1,7 +1,9 @@
+import telethon 
 from telethon import TelegramClient,sync
 
 api_id = 6879411
 api_hash = '2dd2b314916470e49889845946162dd4'
+path = "settings.ini"
 client = TelegramClient('bot', api_id, api_hash)
 
 client.start()
