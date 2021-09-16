@@ -1,13 +1,12 @@
-Conectare masina:
-ssh -i fisier centos@18.188.184.27
+## Adaugare canal bot
 
-Dupa ce te loghezi dai "sudo su"
-Pentru a adauga un nou canal, trebuie adaugat botul in noul canal si apoi trebuie rulat:
-python3 getChannelID.py
-Apoi trebuie luat channel id (daca are "-" in fata trebuie ignorat. Merge si fara), si pus in settings.ini.
-In settings.ini merge copiat de la altul deja existent, si inlocuit ce difera (adresa, cahnnel_id, etc.)
-Acelasi channel id trebuie pus si in tg.py, in parametrul channelIdList. Trebuie doar pus virgula la final, si pus channel id acolo.
-Apoi trebuie oprite procesele:
-./stop_processes.sh
+1) Adaugat userul de telegram in noul canal
+2) Conectat server
+3) sudo su
+4) cd /scripts/telegramBotCryptoPrices
+5) Trebuie gasit ID-ul noului canal. Ruleaza: python3 getChannelID.py
+Si luat id-ul din ce returneaza programul
+6) Restartat botul:
+./stop_bot.sh
 Si apoi repornite:
-./start_processes.sh
+./start_bot.sh
