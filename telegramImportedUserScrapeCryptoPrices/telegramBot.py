@@ -17,9 +17,9 @@ channelIdList = [int(i) for i in config.sections()]
 # Message template
 template = (
        'Price {coinName} - ${coinSymbol} \n'
-       '💸 <b>{price}</b>\n'
+       '💸 <b>${price}</b>\n'
        'Marketcap \n'
-       '🏦 <b>{marketCap} </b>\n'
+       '🏦 <b>${marketCap} </b>\n'
        'Last 24h change \n'
        '📊 <b>{dailyChange}% </b>\n'
        ' \n'
@@ -45,7 +45,7 @@ def generateMessage(channelId):
   coinName = response["name"]
   coinSymbol = response["symbol"]
   price = response["price"]
-  marketCap = str('{:.2f}'.format(response["marketcap"]))
+  marketCap = str(int(response["marketcap"]))
   dailyChange = str('{:.2f}'.format(response["daily_change"]))
   website = response["website"]
   address = response["address"]
