@@ -24,34 +24,49 @@ template = (
        '📊 <b>{dailyChange}% </b>\n'
        ' \n'
        'Links related to ${coinSymbol} \n'
-       '🔘 Check {coinName} <a href="{link1}">Website</a> \n'
-       '🔘 View chart on <a href=poocoin.app/tokens/{address}>Poocoin</a> \n'
-       '🔘 View chart on <a href="charts.bogged.finance/?token={address}">Bogged.Finance</a> \n'
-       '🔘 Buy now on <a href="exchange.pancakeswap.finance/#/swap?outputCurrency={address}">PancakeSwap</a> \n'
-       '🔘 View and VOTE ${coinSymbol} on <a href="{link2}">FreshCoins.io</a> \n'
+       '🔘 Check {coinName} <a href="{website}">Website</a> \n'
+       '🔘 View chart <a href={viewLink}>here</a> \n'
+       '🔘 Buy now from <a href="{buyLink}">here</a> \n'
+       '🔘 View and VOTE ${coinSymbol} on <a href="{voteLink}">FreshCoins.io</a> \n'
 )
 
 def generateMessage(channelId):
   print('* Bot invoked in channel: ' + str(channelId) + '*')
+
+  # Get info from config file
   config = configparser.ConfigParser()
   config.read(path)
-
-  slugInApi = config.get(channelId, "sluginapi")
-  link1 = config.get(channelId, "link1")
-  link2 = config.get(channelId, "link2")
+  coinSlug = config.get(channelId, "coinslug")
 
   # Get data from freshcoins API
-  response = requests.get(apiEndpoint + slugInApi)
+  response = requests.get(apiEndpoint + coinSlug)
   response = response.json()
 
   coinName = response["name"]
   coinSymbol = response["symbol"]
   price = response["price"]
-  address = response["address"]
   marketCap = str('{:.2f}'.format(response["marketcap"]))
   dailyChange = str('{:.2f}'.format(response["daily_change"]))
+  website = response["website"]
+  address = response["address"]
+  network = response["network"]
 
-  messageText = template.format(coinName=coinName, coinSymbol=coinSymbol,price=price,marketCap=marketCap,dailyChange=dailyChange,link1=link1,link2=link2,address=address)
+  if network == "BSC":
+    viewLink = "https://dextools.io/app/bsc/pair-explorer/" + address
+    buyLink = "https://pancakeswap.finance/swap#/swap?outputCurrency=" + address
+  elif network == "ETH":
+    viewLink = "https://dextools.io/app/uniswap/pair-explorer/" + address
+    buyLink = "https://app.uniswap.org/#/swap?outputCurrency=" + address
+  elif network == "MATIC":
+    viewLink = "https://dextools.io/app/polygon/pair-explorer/" + address
+    buyLink = "https://app.sushi.com/swap?outputCurrency=" + address
+  else:
+    viewLink = "https://freshcoins.io"
+    buyLink = "https://freshcoins.io"
+
+  voteLink = "https://freshcoins.io/coins/" + coinSlug
+
+  messageText = template.format(coinName=coinName, coinSymbol=coinSymbol, price=price, marketCap=marketCap, dailyChange=dailyChange,website=website, viewLink=viewLink, buyLink=buyLink, voteLink=voteLink)
   return messageText
 
 print("Start client")
