@@ -2,6 +2,7 @@
 
 1) Adaugat userul de telegram in noul canal
 2) Conectat server
+ssh root@api.freshcoins.io
 3) sudo su
 4) cd /scripts/telegramBotCryptoPrices
 5) Trebuie gasit ID-ul noului canal. Ruleaza: python3 getChannelID.py
