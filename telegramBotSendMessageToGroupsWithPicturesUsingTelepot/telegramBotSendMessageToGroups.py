@@ -13,9 +13,10 @@ import traceback # for error handling
 # pip3 install requests telepot
 
 ## Variables
-botToken = "1576146076:AAFkfubd1h_F58OStPkh4htDpssxidcPvkU"
+botToken = "TELEGRAM_TOKEN_TO_REPLACE"
 messageFile = "message.txt" # Relative path to the message file that contains the text of the sending message
 groupsFile = "groups.txt" # Relative path to the groups file. One chat id per line.
+pictureFile = "picturePath.txt" # Relative path to the groups file. This file contians path to the image, or is empty
 groupsMappingFile = "mapping.txt" # Relative path to the message file. It will be created by script, in order to have a mapping between GroupName and ChatId
 defaultSleepMinutesBetweenMessages = 3
 sleepSecondsBetweenRuns = 30 # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
@@ -52,8 +53,13 @@ def sendTelegramMessage(log, chatId):
     # Read message
     message = open(os.path.join(currentDir, messageFile), mode="r").read()
     bot = telepot.Bot(botToken)
-    # Send message
-    bot.sendMessage(chatId, message)
+    picturePathToSend = open(os.path.join(currentDir, pictureFile), mode="r").read().replace(os.linesep, "").strip()
+    if picturePathToSend == "":
+      # Send only message
+      bot.sendMessage(chatId, message)
+    else:
+      # Send photo with caption
+      bot.sendPhoto(chatId, caption=message, photo=open(picturePathToSend, "rb"))
 
     return True
   except Exception as e:
@@ -165,7 +171,9 @@ def mainFunction():
     if os.path.isfile(os.path.join(currentDir, messageFile)) is False:
       log.info("Message file " + messageFile + " not found. Exiting.")
     if os.path.isfile(os.path.join(currentDir, groupsFile)) is False:
-      log.info("Groups file " + groupsFile + " not found. Exiting.")
+      log.info("Message file " + groupsFile + " not found. Exiting.")
+    if os.path.isfile(os.path.join(currentDir, pictureFile)) is False:
+      log.info("Message file " + pictureFile + " not found. Exiting.")
 
     # At the start we assume that we should send messages to all groups
     oldGroupsDict = {}
