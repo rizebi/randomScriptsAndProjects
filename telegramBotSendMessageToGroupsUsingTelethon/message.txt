@@ -1,1 +1,33 @@
-Test message.
+{
+  "chunks": [
+    [
+      "Hello everyone!",
+      "Hi.",
+      "Hello guys!",
+      "Hey.",
+      "Nice project here!"
+    ],
+    [
+      "Lets upvote <<coin>> in FreshCoins 🔥",
+      "Lets vote <<coin>> in FreshCoins 🔥",
+      "Do not forget to upvote <<coin>> on FreshCoins 🔥",
+      "Vote for <<coin>> on FreshCoins 🔥",
+      "We need to vote <<coin>> on FreshCoins 🔥"
+    ],
+    [
+      "This will give us free visibility.",
+      "It's free visibility.",
+      "We can vote together.",
+      "It is so easy and free visibility!"
+    ],
+    [
+      "Also add to WATCHLIST and don't forget to vote DAILY 🚀",
+      "Vote DAILY and add to WATCHLIST 🚀",
+      "If we vote DAILY we moon 🚀",
+      "Use WATCHLIST to vote DAILY, it's easy 🚀"
+    ],
+    [
+      "\nGo to **FreshCoins** website, search for <<coin>> and VOTE ❤️"
+    ]
+  ]
+}
