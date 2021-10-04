@@ -103,6 +103,7 @@ def readGroupsMapping(log):
 def updateGroupsMapping(log):
 
   try:
+    log.info("##### Run updateGroupsMapping")
     # Get groups from groups mapping
     alreadyKnownGroups = readGroupsMapping(log)
 
@@ -110,6 +111,10 @@ def updateGroupsMapping(log):
     bot = telepot.Bot(botToken)
     global lastUpdateEvent
     response = bot.getUpdates(offset=lastUpdateEvent)
+    if len(response) == 0:
+      log.info("No new updates for now. Nothing to add in the mappings file")
+      return
+
     lastUpdateEvent = response[-1]["update_id"]
 
     # For each update, try to get if the bot was added in a group
@@ -171,9 +176,15 @@ def mainFunction():
     if os.path.isfile(os.path.join(currentDir, messageFile)) is False:
       log.info("Message file " + messageFile + " not found. Exiting.")
     if os.path.isfile(os.path.join(currentDir, groupsFile)) is False:
-      log.info("Message file " + groupsFile + " not found. Exiting.")
+      log.info("Groups file " + groupsFile + " not found. Exiting.")
     if os.path.isfile(os.path.join(currentDir, pictureFile)) is False:
-      log.info("Message file " + pictureFile + " not found. Exiting.")
+      log.info("Picture file " + pictureFile + " not found. Exiting.")
+
+    # Create mappings group if not present
+    if os.path.isfile(os.path.join(currentDir, groupsMappingFile)) is False:
+      f = open(os.path.join(currentDir, groupsMappingFile), "a")
+      f.write("")
+      f.close()
 
     # At the start we assume that we should send messages to all groups
     oldGroupsDict = {}
