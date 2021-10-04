@@ -71,9 +71,9 @@ HERE
 '''
 
 while True:
-    for market_group in :
+    for market_group in market_groups:
         try:
-            client.send_message(market_groups, message)
+            client.send_message(market_group, message)
             time.sleep(25) # Time Gap After Sending message to one group
 
         except ChatWriteForbiddenError:
