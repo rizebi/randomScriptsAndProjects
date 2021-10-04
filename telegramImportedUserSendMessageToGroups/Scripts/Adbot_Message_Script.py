@@ -70,14 +70,10 @@ HERE
 
 '''
 
-x = 0
-y = len(market_groups)
-z = 1
-
-while z == 1:
-    for i in range(y):
+while True:
+    for market_group in :
         try:
-            client.send_message(market_groups[i], message)
+            client.send_message(market_groups, message)
             time.sleep(25) # Time Gap After Sending message to one group
 
         except ChatWriteForbiddenError:
