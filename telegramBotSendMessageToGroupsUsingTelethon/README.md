@@ -6,11 +6,12 @@ The script continuously send messages to Telegram groups. The message is compose
    - 23235324, SPH   <- first is the chat id, then comma then coinName that you want to appear in the messages
 
 ### How to get chat id of a group?
-Unfortunately you cannot get easily the chatId by Group Name. The best (almost automated) way I could find to get the chadId from Group Name, is that during the run of the script, the script will get all the groups that the bot is in, and will write them in mapping.txt
+Unfortunately you cannot get easily the chatId by Group Name. The best (almost automated) way I could find to get the chadId from Group Name, is that to run updateGroupMappings.py and a file "mappings.txt" will be created where the mappingsd between GroupNames and ChatIds will be written.
+Run this script only when you need new chat ids. Do not abuse it (to not get ban)!
+
 
 How exactly to get the mapping between group name and chat id?
-
-Start the script, and the mapping between groupName and chatId will be written in "mapping.txt" file
+Run "python3 updateGroupMappings.py", and the mapping between groupName and chatId will be written in "mapping.txt" file
 
 ### Prerequisites
 - python3
@@ -23,7 +24,7 @@ Start the script, and the mapping between groupName and chatId will be written i
 ### How to configure the bot for the first time
 - Make sure prerequisites are installed
 - Create a folder with the code
-- Update the parameters "api_id" and "api_hash" from script with what you have created previously
+- Update the parameters "api_id" and "api_hash" from both telegramBotSendMessageToGroups.py and updateGroupMappings.py with what you have created previously.
 - Create file "message.txt" and enter there the message JSON (you can start from the example)
 - Create file "groups.txt" and enter the chatIds and coinName, one per line. Leave empty if do not know the chatIds
 - Run "python3 telegramBotSendMessageToGroups.py"
@@ -40,6 +41,6 @@ Start the script, and the mapping between groupName and chatId will be written i
 
 ### How to add another group
 - Add bot in the group
-- Check after few minutes the file mapping.txt to take the chat id
-- Add chat id and add it in groups.txt:  "23423423, SPH" for example
+- Run "python3 updateGroupMappings.py" to update mapping.txt file. Take the chat id from there.
+- Add chat id (do not ommit the "-" if present in mappings.txt) and add it in groups.txt: "23423423, SPH" for example
 - No need to restart the bot
