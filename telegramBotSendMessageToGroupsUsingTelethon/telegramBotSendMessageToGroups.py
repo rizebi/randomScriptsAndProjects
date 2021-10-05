@@ -17,12 +17,11 @@ from telethon.errors.rpcerrorlist import ChatWriteForbiddenError, SlowModeWaitEr
 # pip3 install telethon
 
 ## Variables
-api_id = "###"
-api_hash = "####"
+api_id = "---"
+api_hash = "---"
 
 messageFile = "message.txt" # Relative path to the message file that contains the text of the sending message
 groupsFile = "groups.txt" # Relative path to the groups file. One chat id per line.
-groupsMappingFile = "mapping.txt" # Relative path to the message file. It will be created by script, in order to have a mapping between GroupName and ChatId
 sleepMinutesBetweenMessagesInAGroup = 1440 # One message per day (1440 = 24 hours)
 sleepMinutesBetweenEachMessageSent = 20
 
@@ -111,56 +110,6 @@ async def sendTelegramMessage(log, chatId, coinName):
     log.info(tracebackError)
     lastMessageStatus = False
 
-# Read the group mapping files to get the already known chat ids
-# A line in group mapping file is:
-# Name: <<<My_Group_X>>>, ChatId: <<<1938451051>>>
-def readGroupsMapping(log):
-  log.info("##### Run readGroupsMapping")
-  alreadyKnownGroups = []
-  try:
-    groupsMappings = open(os.path.join(currentDir, groupsMappingFile), "r")
-    groupsMappings = groupsMappings.read().split(os.linesep)
-    # Get group name from
-    for groupMapping in groupsMappings:
-      groupMapping = groupMapping.strip()
-      if groupMapping == "" or groupMapping == os.linesep:
-        continue
-      try:
-        groupName = str(groupMapping.split("<<<")[1].split(">>>")[0])
-        alreadyKnownGroups.append(groupName)
-      except Exception as e:
-        log.info("ERROR when reading from group mapping, when processing: " + groupMapping)
-        tracebackError = traceback.format_exc()
-        log.info(tracebackError)
-
-  except Exception as e:
-    log.info("Error when reading groups mapping for bot: {}".format(e))
-    tracebackError = traceback.format_exc()
-    log.info(tracebackError)
-
-  return alreadyKnownGroups
-
-
-# For each run, get the updates of the bot and update the group mapping file with the new
-# chat_ids. When a bot is added to a group, an update is accessible, and we parse that, and
-# add the chat id to the group mapping file
-def updateGroupsMapping(log):
-  loop = asyncio.get_event_loop()
-  coroutine = updateGroupsMappingHandler(log)
-  loop.run_until_complete(coroutine)
-
-async def updateGroupsMappingHandler(log):
-  try:
-    log.info("##### Run updateGroupsMapping")
-    with open(os.path.join(currentDir, groupsMappingFile), 'w') as file:
-      for chat in await telegramClient.get_dialogs():
-        file.write("Name: <<<" + chat.name + ">>>, ChatId: <<<" + str(chat.id).replace("-", "") + ">>>" + os.linesep)
-
-  except Exception as e:
-    log.info("Error when getting Updates for bot: {}".format(e))
-    tracebackError = traceback.format_exc()
-    log.info(tracebackError)
-
 # Function that read groups to send messages to from the file
 # Groups file has the following format:
 # 23235324, 4    <- first is the chat id, then comma then the interval between messages
@@ -204,12 +153,6 @@ def mainFunction():
     if os.path.isfile(os.path.join(currentDir, groupsFile)) is False:
       log.info("Groups file " + groupsFile + " not found. Exiting.")
 
-    # Create mappings group if not present
-    if os.path.isfile(os.path.join(currentDir, groupsMappingFile)) is False:
-      f = open(os.path.join(currentDir, groupsMappingFile), "a")
-      f.write("")
-      f.close()
-
     # Start the Telegram client
     log.info("Start client")
     global telegramClient
@@ -223,8 +166,6 @@ def mainFunction():
     # Main while
     while True:
       log.info("##################### New run")
-      # Update the groups where the user is in.
-      updateGroupsMapping(log)
 
       # Read the groups
       groups = readGroups(log, oldGroupsDict)
@@ -260,16 +201,10 @@ def mainFunction():
           # Update timestamp regardless of the status in order to not stuck on a grup
           groups[group]["lastMessageTimestamp"] = now
 
-
       oldGroupsDict = groups
-      # Now, we need to sleep in order to not send messages in all the groups from config at once
-      # But also we should not let updateGroupsMapping not to run for much time. We need it to update the mapping
-      # of groups when the user was added in a new group, in order to add the group in config to send messages to it.
-      # Update the groups where the user is in.
+      # Now, we need to sleep in order to not send messages in all the groups from config at once.
       log.info("Sleeping " + str(sleepMinutesBetweenEachMessageSent * 60) + " seconds because we have finished a complete cycle between groups / send a message.")
       time.sleep(sleepMinutesBetweenEachMessageSent * 60)
-
-
 
   ##### END #####
   except KeyboardInterrupt:
@@ -286,7 +221,7 @@ def mainFunction():
 if __name__ == "__main__":
 
   if len(sys.argv) != 1:
-    log.info("Wrong number of parameters. Use: python telegramBotSendMessageToGroups.py.py")
+    log.info("Wrong number of parameters. Use: python telegramBotSendMessageToGroups.py")
     sys.exit(99)
   else:
     mainFunction()
