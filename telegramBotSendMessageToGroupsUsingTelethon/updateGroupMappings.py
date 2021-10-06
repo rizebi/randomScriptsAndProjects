@@ -12,8 +12,8 @@ from telethon import TelegramClient # for telegram use
 # pip3 install telethon
 
 ## Variables
-api_id = "---"
-api_hash = "---"
+api_id = "aaa"
+api_hash = "aaa"
 
 groupsMappingFile = "mapping.txt" # Relative path to the message file. It will be created by script, in order to have a mapping between GroupName and ChatId
 
@@ -77,7 +77,7 @@ def mainFunction():
     # Start the Telegram client
     log.info("Start client")
     global telegramClient
-    telegramClient = TelegramClient("bot", api_id, api_hash)
+    telegramClient = TelegramClient("bot2", api_id, api_hash)
     telegramClient.start()
 
     # Update the groups where the user is in.

@@ -17,8 +17,8 @@ from telethon.errors.rpcerrorlist import ChatWriteForbiddenError, SlowModeWaitEr
 # pip3 install telethon
 
 ## Variables
-api_id = "---"
-api_hash = "---"
+api_id = "aaa"
+api_hash = "aaa"
 
 messageFile = "message.txt" # Relative path to the message file that contains the text of the sending message
 groupsFile = "groups.txt" # Relative path to the groups file. One chat id per line.
