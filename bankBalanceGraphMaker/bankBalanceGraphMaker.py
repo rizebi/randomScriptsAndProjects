@@ -55,7 +55,9 @@ def replaceMonths(log, transaction):
   return transaction
 
 # Function that sanitize and process one transaction
-def processTransaction(log, transactionsDict, transaction, fileName):
+def processTransaction(log, balanceDict, transaction, fileName):
+
+  fileName = fileName.split("/")[-1]
 
   # Check if line contains a transaction
   months = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"]
@@ -67,67 +69,75 @@ def processTransaction(log, transactionsDict, transaction, fileName):
     return
   # Hack to treat case when description of the transaction contains name of one month
   if "Detalii:" in transaction:
-    return
+   return
 
   transaction = transaction.split('"')
-  transaction[1] = transaction[1].replace(".", "").replace(",", ".")
+  transaction[-2] = transaction[-2].replace(".", "").replace(",", ".")
   transaction = "".join(transaction)
   transaction = replaceMonths(log, transaction)
   transaction = transaction.split(',')
 
-  log.info(transaction)
+  #log.info(transaction)
 
   transactionTimestamp = int(datetime.datetime.strptime(transaction[0], '%d %B %Y').strftime("%s"))
-  if transaction[6] != "":
-    amount = (-1) * float(transaction[6])
-  else:
-    try:
-      amount = float(transaction[8])
-    except:
-      # Hack because CSV file from bank is junk
-      amount = float(transaction[7])
 
+  balance = float(transaction[-1])
   if "EUR" in fileName:
-    amount *= eurToRonMediumExchangeRate
+    balance *= eurToRonMediumExchangeRate
 
-  if transactionTimestamp not in transactionsDict:
-    transactionsDict[transactionTimestamp] = amount
+  if transactionTimestamp not in balanceDict:
+    balanceDict[transactionTimestamp] = {}
+    balanceDict[transactionTimestamp][fileName] = balance
   else:
-    transactionsDict[transactionTimestamp] += amount
-
+    if fileName not in balanceDict[transactionTimestamp]:
+      balanceDict[transactionTimestamp][fileName] = balance
 
 # Function that process one file
-# transactionsDict is a dictionary for the transactions
-def processStatement(log, transactionsDict, fileName):
+# balanceDict is a dictionary for the transactions
+def processStatement(log, balanceDict, fileName):
 
   transactions = open(fileName, "r")
   transactions = transactions.read().split("\n")
 
   for transaction in transactions:
-    processTransaction(log, transactionsDict, transaction, fileName)
+    processTransaction(log, balanceDict, transaction, fileName)
 
-# This function get the dictionary with all the transaction, and current balance
-# And will generate datapoints
-def generateDataPoints(log, transactionsDict, currentBalance):
+# This function get the dictionary with all the balances
+# and will generate datapoints
+# {"<date>": {"<filename>": 234}}
+def generateDataPoints(log, balanceDict):
 
-  intermediaryList = []
-  for key in transactionsDict.keys():
-    intermediaryList.append([key, transactionsDict[key]])
+  fileList = os.listdir(statementsFolder)
+  latestBalanceForEachAccountDict = {}
+  for file in fileList:
+    latestBalanceForEachAccountDict[file] = 0
 
-  intermediaryList.sort(key=lambda x:x[0], reverse=True)
+  dateList = []
+  for key in balanceDict.keys():
+    dateList.append(key)
+  dateList.sort()
 
-  # Now we have the transaction list sorted reversely
-  dataPointsX = []
-  dataPointsY = []
-  for element in intermediaryList:
-    dataPointsX.append(element[0])
-    dataPointsY.append(currentBalance - element[1])
-    currentBalance -= element[1]
+  balanceList = []
 
-  dataPointsX.reverse()
-  dataPointsY.reverse()
-  
-  return [dataPointsX, dataPointsY]
+  for iterDate in dateList:
+    log.info("##### Date: " + str(datetime.datetime.fromtimestamp(int(iterDate))))
+    currentBalance = 0
+    fileList = os.listdir(statementsFolder)
+    # For each file in the day balances
+    for file in balanceDict[iterDate].keys():
+      log.info("For file: " + file + " got: " + str(balanceDict[iterDate][file]))
+      currentBalance += balanceDict[iterDate][file]
+      latestBalanceForEachAccountDict[file] = balanceDict[iterDate][file]
+      fileList.remove(file)
+
+    # For the files that on this date do not have any balances listed, take the last known balance
+    for file in fileList:
+      currentBalance += latestBalanceForEachAccountDict[file]
+      log.info("For file: " + file + " got from memory: " + str(latestBalanceForEachAccountDict[file]))
+
+    balanceList.append(currentBalance)
+
+  return [dateList, balanceList]
 
 def plot(log, dataPoints):
 
@@ -166,28 +176,27 @@ def plot(log, dataPoints):
 
 
 # Main function
-def mainFunction(currentBalance):
+def mainFunction():
   # Initialize the logger
   log = getLogger()
   log.info("############################################# New run of script")
-  log.info("Current Balance: " + str(currentBalance))
 
   try:
     if not os.path.isdir(statementsFolder):
       log.info("statementsFolder = " + statementsFolder + " not found.")
       sys.exit(1)
 
-    transactionsDict = {}
+    balanceDict = {}
 
     for statementFile in os.listdir(statementsFolder):
       f = os.path.join(statementsFolder, statementFile)
       # checking if it is a file
       if os.path.isfile(f):
         log.info("Processing file " + f)
-        processStatement(log, transactionsDict, f)
+        processStatement(log, balanceDict, f)
 
     # Generate datapoints from dict
-    dataPoints = generateDataPoints(log, transactionsDict, currentBalance)
+    dataPoints = generateDataPoints(log, balanceDict)
 
     # Plot
     plot(log, dataPoints)
@@ -206,10 +215,9 @@ def mainFunction(currentBalance):
 ##### BODY #####
 if __name__ == "__main__":
 
-  if len(sys.argv) != 2:
+  if len(sys.argv) != 1:
     log = getLogger()
-    log.info("Wrong number of parameters. Use: python bankBalanceGraphMaker.py <currentBalance>")
+    log.info("Wrong number of parameters. Use: python bankBalanceGraphMaker.py")
     sys.exit(100)
   else:
-    currentBalance = sys.argv[1]
-    mainFunction(float(currentBalance))
+    mainFunction()
