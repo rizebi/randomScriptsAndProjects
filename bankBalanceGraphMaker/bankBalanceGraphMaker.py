@@ -120,12 +120,12 @@ def generateDataPoints(log, balanceDict):
   balanceList = []
 
   for iterDate in dateList:
-    log.info("##### Date: " + str(datetime.datetime.fromtimestamp(int(iterDate))))
+    # log.info("##### Date: " + str(datetime.datetime.fromtimestamp(int(iterDate))))
     currentBalance = 0
     fileList = os.listdir(statementsFolder)
     # For each file in the day balances
     for file in balanceDict[iterDate].keys():
-      log.info("For file: " + file + " got: " + str(balanceDict[iterDate][file]))
+      # log.info("For file: " + file + " got: " + str(balanceDict[iterDate][file]))
       currentBalance += balanceDict[iterDate][file]
       latestBalanceForEachAccountDict[file] = balanceDict[iterDate][file]
       fileList.remove(file)
@@ -133,7 +133,7 @@ def generateDataPoints(log, balanceDict):
     # For the files that on this date do not have any balances listed, take the last known balance
     for file in fileList:
       currentBalance += latestBalanceForEachAccountDict[file]
-      log.info("For file: " + file + " got from memory: " + str(latestBalanceForEachAccountDict[file]))
+      # log.info("For file: " + file + " got from memory: " + str(latestBalanceForEachAccountDict[file]))
 
     balanceList.append(currentBalance)
 
