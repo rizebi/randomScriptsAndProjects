@@ -23,10 +23,12 @@ try:
   sender = "OpenVPN Home"
   message = "From: OpenVPN Home\nSubject: {0}\n\n{1}".format(subject, msg)
 
-  server = smtplib.SMTP_SSL(smtp_server, 465)
-  server.ehlo()
-  server.login(smtp_user, smtp_pass)
-  server.sendmail(sender, recipients, message)
-  server.close()
+  # Send mail only when user is not pi2 to avoid spam
+  if "pi2" not in str(sys.argv[1]):
+    server = smtplib.SMTP_SSL(smtp_server, 465)
+    server.ehlo()
+    server.login(smtp_user, smtp_pass)
+    server.sendmail(sender, recipients, message)
+    server.close()
 except:
   pass
