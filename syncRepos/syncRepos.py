@@ -9,8 +9,8 @@ import subprocess # for executing bash
 
 ##### Variables #####
 localFolderPath = "C:\\tmp"
-sourceRepoPath = "git@github.com:rizebi/randomScriptsAndProjects.git"
-destinationRepoPath = "git@github.com:rizebi/destination.git"
+sourceRepoPath = "git@source_scm.com:myusername/source_repository.git"
+destinationRepoPath = "git@destination_scm.com:/destination_repository.git"
 
 ##### Functions #####
 
@@ -132,8 +132,7 @@ def mainFunction():
       log.info("ERROR when pushing to destination:")
       log.info(error)
       sys.exit(4)
-
-
+    log.info("Successfully pushed to destination!!")
 
   ##### END #####
   except KeyboardInterrupt:
@@ -144,7 +143,6 @@ def mainFunction():
       tracebackError = traceback.format_exc()
       log.info(tracebackError)
       sys.exit(99)
-
 
 ##### BODY #####
 if __name__ == "__main__":
