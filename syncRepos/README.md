@@ -18,11 +18,11 @@ Notes if problems:
 - If the script fails with something like "Host key verification failed", it is because you never trusted the AzureDevOps / Bitbucket ssh fingerprints. For that run some git clone on both, and select "yes" when asked "are you sure you want to trust this"
 
 - If you do not have the setup for git, configure it in file: C:\Users\$your_user\.ssh\config. Add something like:
-----
-host axzuredevops.com
+
+
+host azuredevops.com
 user git
 identityfile C:\Users\path\to\my\key
 host bitbucket.com
 user git
 identityfile C:\Users\path\to\my\other\key
-----
