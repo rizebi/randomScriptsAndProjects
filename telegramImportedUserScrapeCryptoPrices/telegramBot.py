@@ -4,8 +4,8 @@ import configparser # for reading config file
 from telethon import TelegramClient, events # for interacting with Telegram
 
 # Variables
-api_id = 6879411
-api_hash = '2dd2b314916470e49889845946162dd4'
+api_id = 111111
+api_hash = '111111111111111111111111111'
 path = "settings.ini"
 apiEndpoint = "https://api.freshcoins.io/coins/slugs/"
 
