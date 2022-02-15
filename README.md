@@ -1,4 +1,4 @@
-This is a repo full of previous projects that I coded for personal use or Freelancing.
+# This is a repo full of previous projects that I coded for personal use or Freelancing.
 More information can be found in the README.md from each folder
 
 Content:
