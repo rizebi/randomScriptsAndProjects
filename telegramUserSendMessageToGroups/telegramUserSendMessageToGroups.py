@@ -13,8 +13,8 @@ from telethon import TelegramClient, events, sync # for telegram use
 # pip3 install telethon
 
 ## Variables
-api_id = "6019497"
-api_hash = "d20d859a1504390e1e3a2b5b2210c2aa"
+api_id = "111111"
+api_hash = '111111111111111111111111111'
 groupsFile = "groups.txt" # Relative path to the groups file. One groupName per line.
 sleepSecondsBetweenRuns = 30 # This should be lower that the smallest number of wait minutes for a group. 30 seconds is good.
 
