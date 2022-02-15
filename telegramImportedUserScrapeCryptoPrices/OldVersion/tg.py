@@ -3,8 +3,8 @@ import time
 import configparser
 
 from bs4 import BeautifulSoup
-api_id = 6879411
-api_hash = '2dd2b314916470e49889845946162dd4'
+api_id = 111111
+api_hash = '111111111111111111111111111'
 bot_token = ''
 
 channelIdList = [553270668, 521440549, 561526530, 572171595, 597032167]
