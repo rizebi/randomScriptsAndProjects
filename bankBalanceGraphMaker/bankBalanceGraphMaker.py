@@ -7,7 +7,7 @@ import traceback # for error handling
 import matplotlib.pyplot as plt
 
 ##### Variables #####
-statementsFolder = "/Users/eusebiu.rizescu/Downloads/extrase"
+statementsFolder = "/Users/eusebiurizescu/Downloads/extrase"
 
 eurToRonMediumExchangeRate = 4.9204 # For 2021
 
