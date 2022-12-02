@@ -1,0 +1,23 @@
+{
+  "servers": {
+    "pi1":
+    {
+      "ip": "192.168.100.100",
+      "local": "yes"
+    },
+    "localnetflix":
+    {
+      "ip": "192.168.100.150",
+      "local": "no",
+      "user": "ebi",
+      "pass": "/root/Tools/Config/localnetflixPass",
+      "port": "19972"
+    }
+  },
+  "commands": {
+    "/command1": {
+      "host": "localnetflix",
+      "command": "sudo /scripts/command1.py $1"
+    }
+  }
+}
