@@ -1,0 +1,64 @@
+<!-- templates/profile.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Upload image and select filter</h3>
+    <div class="box">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/profile" enctype = "multipart/form-data">
+            <div class="field">
+                <div class="input-group-prepend">
+                    <input class="form-control form-control-lg" type="file" name="picture" placeholder="Select picture">
+                </div>
+            </div>
+
+            <div class="field">
+              <select class="form-select" id="filter" name="filter">
+                <option selected>Select filter</option>
+                <option value="rgb">rgb</option>
+                <option value="rgba">rgba</option>
+                <option value="grey">grey</option>
+                <option value="hand_drawn">hand_drawn</option>
+                <option value="edge_curve">edge_curve</option>
+                <option value="blur">blur</option>
+                <option value="contour">contour</option>
+                <option value="edge_enhance">edge_enhance</option>
+                <option value="emboss">emboss</option>
+                <option value="smooth">smooth</option>
+                <option value="sharpen">sharpen</option>
+                <option value="gaussian_blur">gaussian_blur</option>
+                <option value="min">min</option>
+                <option value="median">median</option>
+                <option value="max">max</option>
+                <option value="unsharp_mask">unsharp_mask</option>
+                <option value="emboss_45d">emboss_45d</option>
+                <option value="sharp_edge">sharp_edge</option>
+                <option value="sharp_center">sharp_center</option>
+                <option value="emboss_asym">emboss_asym</option>
+              </select>
+            </div>
+
+            <button class="button is-block is-info is-large is-fullwidth">Transform picture</button>
+        </form>
+    </div>
+</div>
+
+<script>
+  $(".dropdown-menu li a").click(function(){
+  $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
+  $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
+  });
+</script>
+
+
+{% endblock %}
