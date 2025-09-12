@@ -32,9 +32,9 @@ startDir = "D:\\Pictures"
 
 
 def random_with_N_digits(n):
-    range_start = 10**(n-1)
-    range_end = (10**n)-1
-    return randint(range_start, range_end)
+  range_start = 10**(n-1)
+  range_end = (10**n)-1
+  return randint(range_start, range_end)
 
 def getLastModifiedDate(file):
   fileTime = os.path.getmtime(file)
@@ -293,6 +293,28 @@ def main():
           renameFile(root, file, fileTimeSeconds)
           dateGotFromName += 1
           continue
+        except:
+          pass
+
+      #If contains "_20200907_143624"
+      if "_" in file:
+        try:
+          match = re.search(r'_(\d{8})_(\d{6})', file)
+          if match:
+            year = int(match.group(1)[0:4])
+            month = int(match.group(1)[4:6])
+            day = int(match.group(1)[6:8])
+
+            hour = int(match.group(2)[0:2])
+            min = int(match.group(2)[2:4])
+            sec = int(match.group(2)[4:6])
+
+            readTime = datetime(year, month, day, hour, min, sec)
+            epoch = datetime.utcfromtimestamp(0)
+            fileTimeSeconds = (readTime - epoch).total_seconds()
+            renameFile(root, file, fileTimeSeconds)
+            dateGotFromName += 1
+            continue
         except:
           pass
 
