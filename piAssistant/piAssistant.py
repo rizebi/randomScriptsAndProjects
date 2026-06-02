@@ -2,7 +2,6 @@ import os
 import json
 import time
 import logging # for logging
-import platform # to guess the host we are on
 import datetime # for logging
 import subprocess # for executing commands
 from pathlib import Path # to read the password file
@@ -10,21 +9,15 @@ import urllib.request as request # to send messages
 logging.getLogger('telethon').setLevel(logging.ERROR) # to avoid telethon log spam
 from telethon import TelegramClient, events # to receive messages
 
-# Read credentials
-if "macOS" in platform.platform():
-  tokenFolderPath = "/Users/eusebiurizescu/.telegram"
-else:
-  tokenFolderPath = "/root/Tools/Config"
-
 currentDir = os.getcwd()
-botToken = (Path(tokenFolderPath) / "telegramBotToken").read_text().replace("\\n", "").replace("\n", "")
-apiId = (Path(tokenFolderPath) / "telegramApiId").read_text().replace("\\n", "").replace("\n", "")
-apiHash = (Path(tokenFolderPath) / "telegramApiHash").read_text().replace("\\n", "").replace("\n", "")
-channelIdList = [-442381868]
-client = TelegramClient('bot', apiId, apiHash)
-
 configFile = open("config.json")
 config = json.load(configFile)
+
+botToken = os.getenv(config["secretsEnv"]["botToken"])
+apiId = os.getenv(config["secretsEnv"]["apiId"])
+apiHash = os.getenv(config["secretsEnv"]["apiHash"])
+channelIdList = [int(os.getenv(config["secretsEnv"]["channelId"]))]
+client = TelegramClient('bot', apiId, apiHash)
 
 # Logging function
 def getLogger():
@@ -54,11 +47,14 @@ def executeCommand(log, command):
   log.info("Executing: " + command)
   try:
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
-    output = output.decode('utf-8')
   except Exception as e:
     error = "ERROR: " + str(e.returncode) + "  " + str(e) + "\n"
     output = repr(e)  # to get the output even when error
-  #log.info("Output: " + output)
+  try:
+    output = output.decode('utf-8')
+  except:
+    pass
+
   return output, error
 
 def sendMessage(log, message):
@@ -74,48 +70,70 @@ def sendMessage(log, message):
   result = json.loads(sendMessage.read().decode())["result"]
   log.info(result)
 
-def runLocal(log, instructions, messageList):
-  pass
-
 def runRemote(log, instructions, host, messageList):
   # Get password
-  if "macOS" in platform.platform():
-    sshPasswordText = Path("/Users/eusebiurizescu/.telegram/localnetflixPass").read_text().replace("\\n", "").replace("\n", "")
-  else:
-    sshPasswordText = Path(host["pass"]).read_text().replace("\\n", "").replace("\n", "")
+  sshPasswordText = os.getenv(host["pass"])
+  # Remove backslashes (this is in order to work on both local laptop and server)
+  sshPasswordText = sshPasswordText.replace("\\", "")
 
   # Replace arguments in instructions command
   instructionsCommand = instructions["command"]
-  for i in range(10):
+  commandParametersCount = 0
+  for i in range(1, 10):
     try:
+      if "$" + str(i) in instructionsCommand:
+        commandParametersCount += 1
       instructionsCommand = instructionsCommand.replace("$" + str(i), "\"" + messageList[i] + "\"")
     except:
       pass
+  if commandParametersCount != len(messageList) - 1:
+    return "", "Wrong number of parameters received."
 
   # Execute the command
-  command = "sshpass -p '" + sshPasswordText + "' ssh -p " + host["port"] + " "+ host["user"] + "@" + host["ip"] + " " + instructionsCommand
+  command = "sshpass -p '" + sshPasswordText + "' ssh -o StrictHostKeyChecking=no -p " + host["port"] + " "+ host["user"] + "@" + host["ip"] + " " + instructionsCommand
   output, error = executeCommand(log, command)
   log.info("Output = " + str(output))
   log.info("Error = " + str(error))
 
-  return str(error).replace(sshPasswordText, "SECRET")
+  return str(output).replace(sshPasswordText, "SECRET"), str(error).replace(sshPasswordText, "SECRET")
+
+def getKnownCommands(log):
+  knownCommands = "Rarely used commands:\n"
+  for command in config["commands"].keys():
+    if config["commands"][command]["hidden"] == "true":
+      knownCommands += command + " " + config["commands"][command]["parameters"] + "\n"
+
+  knownCommands += "\nUsual commands:\n"
+  for command in config["commands"].keys():
+    if config["commands"][command]["hidden"] == "false":
+      knownCommands += command + " " + config["commands"][command]["parameters"] + "\n\n"
+
+  return knownCommands
+
+def sendKnownCommands(log):
+  knownCommands = getKnownCommands(log)
+  sendMessage(log, knownCommands)
 
 def processMessage(log, receivedMessage):
   messageList = receivedMessage.split(" ")
   if messageList[0] in config["commands"].keys():
     instructions = config["commands"][messageList[0]]
-    isLocal = config["servers"][instructions["host"]]["local"]
-    if isLocal == "yes":
-      error = runLocal(log, instructions, messageList)
-    else:
-      host = config["servers"][instructions["host"]]
-      error = runRemote(log, instructions, host, messageList)
+    host = config["servers"][instructions["host"]]
+    output, error = runRemote(log, instructions, host, messageList)
     if error == "":
-      sendMessage(log, "Done")
+      messageToSend = "Done\n"
+      messageToSend += "Command output: " + str(output) + "\n"
+      sendMessage(log, messageToSend)
     else:
-      sendMessage(log, "Error: " + str(error))
+      messageToSend = "Error\n"
+      messageToSend += "Output: " + str(output) + "\n"
+      messageToSend += "Error: " + str(error) + "\n"
+      sendMessage(log, messageToSend)
   else:
     sendMessage(log, "Command not recognized")
+
+  # Send known commands after each message
+  sendKnownCommands(log)
 
 @client.on(events.NewMessage(channelIdList))
 async def main(event):
@@ -135,4 +153,8 @@ if __name__ == "__main__":
   client.start()
   log.info("Client started")
 
+  sendMessage(log, "PiAsisstant restarted.")
+  sendKnownCommands(log)
+
   client.run_until_disconnected()
+
