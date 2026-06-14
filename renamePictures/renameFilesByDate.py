@@ -45,7 +45,7 @@ def getDateTaken(file):
   try:
     im = Image.open(file)
     exif = im.getexif()
-    fileTime = exif.get(36867)
+    fileTime = exif.get(36867) or exif.get(306)
     if fileTime is not None:
       if int(fileTime[0:4]) < 2000:
         return None
@@ -117,7 +117,7 @@ def main():
       # 20160722_173949_52126.jpg
       # This is our custom format.
       # We MUST NOT remane a file already named by us. So skip
-      alreadyFormattedBool = re.search("^[0-9]{8}_[0-9]{6}_[0-9]{5}\..*$", file)
+      alreadyFormattedBool = re.search("^[0-9]{8}_[0-9]{6}_[0-9]{5}\\..*$", file)
       if alreadyFormattedBool:
         #print("Already formatted")
         alreadyFormatted += 1
