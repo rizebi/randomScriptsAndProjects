@@ -28,7 +28,7 @@ from win32com.propsys import propsys, pscon
 # Whatsapp on Apple does not name files in a way to extract at least the date
 # So this script might get wrong date on photos from Whatsapp from Apple
 
-startDir = "D:\\Pictures"
+startDir = "Z:\\Poze\\Neprocesate"
 
 
 def random_with_N_digits(n):
@@ -43,17 +43,30 @@ def getLastModifiedDate(file):
 
 def getDateTaken(file):
   try:
+    # First try Windows Property System (works for HEIC and also JPEG)
+    try:
+      properties = propsys.SHGetPropertyStoreFromParsingName(file)
+      dt = properties.GetValue(pscon.PKEY_Photo_DateTaken).GetValue()
+      if dt is not None:
+        return dt.timestamp()
+    except:
+      pass
+
+    # Fallback to EXIF (JPEG, older images)
     im = Image.open(file)
     exif = im.getexif()
     fileTime = exif.get(36867) or exif.get(306)
+
     if fileTime is not None:
       if int(fileTime[0:4]) < 2000:
         return None
+
       datetime_object = datetime.strptime(fileTime, "%Y:%m:%d %H:%M:%S")
       epoch = datetime.utcfromtimestamp(0)
       return (datetime_object - epoch).total_seconds()
-    else:
-      return None
+
+    return None
+
   except:
     #print("ERROR when get dateTaken from: " + file)
     return None
