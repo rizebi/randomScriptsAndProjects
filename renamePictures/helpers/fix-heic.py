@@ -11,7 +11,7 @@ from win32com.propsys import propsys, pscon
 # Naming format:
 # YYYYMMDD_HHMMSS_RANDOM.HEIC
 
-startDir = "Z:\\Poze\\Neprocesate\\2023 - 09 - Tenerife"
+startDir = "Z:\\Poze"
 
 # Set to False to actually rename files
 dryRun = False
@@ -57,17 +57,27 @@ def renameFile(root, file, fileTime):
   ext = file.split(".")[-1]
   newName = f"{year}{month}{day}_{hour}{minute}{second}_{rand}.{ext}"
 
+  # If only the random part differs, don't rename.
+  oldBase = re.sub(r"_\d{5}(\.[^.]+)$", r"\1", file, flags=re.IGNORECASE)
+  newBase = re.sub(r"_\d{5}(\.[^.]+)$", r"\1", newName, flags=re.IGNORECASE)
+
+  if oldBase.lower() == newBase.lower():
+    print(f"Skipping (same timestamp): {file}\n")
+    return False
+
   oldPath = os.path.join(root, file)
   newPath = os.path.join(root, newName)
 
-  print(f'Old: {file}')
-  print(f'New: {newName}')
+  print(f"Old: {file}")
+  print(f"New: {newName}")
 
   if dryRun:
     print("DRY RUN - Not renamed\n")
   else:
     os.rename(oldPath, newPath)
     print("Renamed\n")
+
+  return True
 
 
 def main():
