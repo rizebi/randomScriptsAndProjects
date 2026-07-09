@@ -28,7 +28,7 @@ from win32com.propsys import propsys, pscon
 # Whatsapp on Apple does not name files in a way to extract at least the date
 # So this script might get wrong date on photos from Whatsapp from Apple
 
-startDir = "Z:\\Poze\\Neprocesate"
+startDir = "Z:\\Poze"
 
 
 def random_with_N_digits(n):
